@@ -1,93 +1,12 @@
 """
-Synthetic_Lethal.py 0.10.0
-    April 28, 2019
-    Dennis A. Simpson
-    Modified so that variable length sgRNA target sequences can be used.
-Synthetic_Lethal.py 0.8.0
-    May 11, 2018
-    Dennis A. Simpson
-    Major change to index file structure.  Index file uses Index ID's instead of sequence now.  Requires a master index
-    file to lookup sequence.  As part of this the internal logic was changed and the count file names were changed to
-    use the Index ID instead of the index sequence.  Because Python was not releasing the memory in a timely fashion, an
-    explicit call to the garbage collector was added to clean things up.
-Synthetic_Lethal.py 0.7.0
-    October 30, 2017
-    Dennis A. Simpson
-    Fixed a looping bug that was causing target search to run for days.  Refactored code so that the statistics is all
-    done in memory now.  Cleaned up many lines of dead code.  This has resulted in a great speed improvement.  Added
-    some quality checks to the targets.  Removed the requirement that only one target be allowed per mismatch.  Now
-    returns first target with lowest mismatch score found.
-Synthetic_Lethal.py 0.6.0
-    September 10, 2017
-    Dennis A. Simpson
-    Target search is done based on the location of an anchor sequence.  If this sequence is not found then no search is
-    attempted.  Search no longer uses padded sequences.  A label error has been corrected in the output files.  Target
-    search stops when a mismatch of 0 or 1 is found.  Greater mismatches require searching to the end of the target
-    file.  Code has been cleaned up.  Smith-Waterman and Muscle options have been removed.
-Synthetic_Lethal.py 0.5.0
-    July 25, 2017
-    Dennis A. Simpson
-    Major changes.  Added statistical analysis routines, folded permutation function into class.
-Synthetic_Lethal.py 0.2.0
-    Dec. 1, 2016
-    Dennis A. Simpson
-    Changed versioning to conform to semantic versioning (http://semver.org/).  Added version dependency checks for
-    modules.
-Synthetic_Lethal.py v2.0
-    Aug. 21, 2016
-    Dennis A. Simpson
-    Added the ability to search for targets by Smith-Waterman and Muscle alignments.  Fixed output summary that was not
-    aligning the total reads and targeted reads correctly.
-Synthetic_Lethal.py v1.6
-    Aug. 19, 2016
-    Dennis A. Simpson
-    Fixed a bug that caused the no index analysis to loop the same number of times as indexes present.  Also corrected
-    a bug that over counted the number of reads without targets.
-Synthetic_Lethal.py v1.5
-    Aug. 7, 2016
-    Dennis A. Simpson
-    Refactored code.  Made this formally a class now.
-Synthetic_Lethal.py v1.2
-    April 2, 2016
-    Dennis A. Simpson
-    Added a control to determine if sequence is reverse complimented prior to target search.  Added a Try/Except near
-    line 413 to capture and bypass a rare error seen in the CRISPR searches.
-Synthetic_Lethal.py v1.1
-    January 20, 2016
-    Dennis A. Simpson
-    Minor tweak to add a column in the param output file that contains the total targeted reads for a given index.
-Synthetic_Lethal.py v1.0
-    December 29, 2015
-    Dennis A. Simpson
-    Program now requires that sequencing indices and shRNA targets all be unique.  Unknown sequence target can range in
-    length from the length of the shRNA target to any size defined by the user.  Expected start location and desired
-    padding values are available to the user now.  These changes have slowed the execution of the code substantially.
-    CPU time for 20,000 reads now approximately 131 seconds using a mismatch of 2 and shRNA padding of 2.  Reads with
-    no shRNA target are tabulated.
-Synthetic_Lethal.py v0.8
-    December 22, 2015
-    Dennis A. Simpson
-    Still experimenting with the best distance calculator.  Now using python-Levenshtein to do the comparison.  This 
-    module is a full 2 seconds faster per 2000 reads than editdistance.  This should shave at least 15 minutes from the 
-    cpu time on a full run.  Additional major changes.  Demultiplexed FASTQ can be given as input.  This will analyzed,
-    demultiplexed, the demultiplexed files will then be searched for shRNA targets.  Overall these changes have resulted
-    in more cpu time.  20,000 reads now take 85 seconds vs 67 seconds.  The trade off is much shorter real world time.
-Synthetic_Lethal.py v0.6
-    December 18, 2015.
-    Dennis A. Simpson
-    Changed the match_maker function from using re.finall() to editdistance.eval().  The latter is an implementation of
-    Levenshtein distance using C++ and Cython.  Dramatic improvement; 48 seconds for 200 reads down to 1.3 seconds.
-Synthetic_Lethal.py v0.5
-    December 18, 2015
-    Dennis A. Simpson
-    This magical little module will score shRNA targets in indexed cell populations.  While it does run, it is slow.  
-    I think the code may benefit from changing the mismatch calling from regex to blat.  Will require some fairly
-    substantial additions to make it happen.
+Synthetic_Lethal.py 1.0.0
+    May 2, 2019
+    Ready for publication
 
 @author: Dennis A. Simpson
          University of North Carolina at Chapel Hill
          Chapel Hill, NC  27599
-@copyright: 2018
+@copyright: 2019
 """
 import gc
 import ntpath
@@ -108,8 +27,8 @@ import numpy
 import math
 
 __author__ = 'Dennis A. Simpson'
-__version__ = '0.10.1'
-__package__ = 'Volundr'
+__version__ = '1.0.0'
+__package__ = 'Völundr'
 
 
 class SyntheticLethal:

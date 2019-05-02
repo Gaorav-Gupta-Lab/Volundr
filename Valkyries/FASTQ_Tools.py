@@ -1,5 +1,4 @@
 """
-
 FASTQ_Tools.py v1.0.0
     April 29, 2018
     Dennis A. Simpson

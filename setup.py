@@ -19,5 +19,5 @@ setup(
     long_description=open('README.md').read(),
 
     description='Package for using CRISPR to do synthetic lethal and viable assays in mammalian cells',
-    install_requires=['scipy', 'natsort', 'pysam', 'python-magic', 'pathos', 'numpy']
+    install_requires=['scipy', 'natsort', 'pysam', 'python-magic', 'pathos', 'numpy', 'python-levenshtein']
 )
