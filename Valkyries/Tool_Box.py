@@ -1,25 +1,10 @@
 """
 Tool_Box v0.3.0
-    Aug. 6, 2018
-    Dennis A. Simpson
-    Options file parser is no longer a class and now returns an updated argparse object.  This library needs a good
-    scrubbing.
-Tool_Box v0.2.1
-    October 12, 2017
-    Dennis A. Simpson
-    Updated the options file parser.
-Tool_Box v0.2.0
-    June 9, 2017
-    Dennis A. Simpson
-    Added the class CoverageCalculator, the decorator class depreciated, and function debug_messenger.
-Tool_Box v0.1.0
-    May 22, 2017
-    Dennis A. Simpson
-    Initial setup of module.  Intended to contain various general functions that can be applied to many programs.
+    Various helper functions for use in Volundr.
 @author: Dennis A. Simpson
          University of North Carolina at Chapel Hill
          Chapel Hill, NC  27599
-@copyright: 2017
+@copyright: 2019
 """
 
 import csv
@@ -32,17 +17,13 @@ import platform
 import inspect
 import time
 import cProfile
-import ntpath
 import sys
 import getpass
 import socket
 import logging
-import gzip
 from datetime import datetime
 from contextlib import suppress
 import re
-import magic
-import pysam
 import resource
 
 __author__ = 'Dennis A. Simpson'
@@ -110,20 +91,6 @@ except ImportError:
         return inner
 
 
-def __infile(self):
-
-    mime_type = magic.from_file(self.input_file, mime=True)
-
-    if "text" in mime_type:
-        fq_file = open(self.input_file, 'rU')
-    elif "gzip" in mime_type:
-        fq_file = gzip.open(self.input_file, 'rt', encoding='utf-8')
-    else:
-        self._log.warning("Unsupported file-type for {0}.  Only TEXT or GZIP Allowed.".format(self.input_file))
-        raise SystemExit(1)
-    return fq_file
-
-
 def delete(file_list):
     """
     Delete one or more files.
@@ -184,43 +151,6 @@ def chromosomes(species, log, include_chrY):
         chrom_list.append("chrY")
 
     return chrom_list
-
-
-class VivifiedDictionary(dict):
-    """
-    This class creates a vivified dictionary.
-    """
-    def __missing__(self, key):
-        value = self[key] = type(self)()
-        return value
-
-
-class CoverageCalculator:
-    """
-    This class will calculate the coverage depth and breadth from a sorted, indexed BAM file and a region of interest.
-    This could be a whole chromosome or a subregion.
-    """
-
-    def __init__(self, data_file):
-        self.data_file = data_file
-        self.cell_name = ntpath.basename(data_file)
-
-    def coverage(self, region):
-        print("-->Determining read coverage and depth for \033[1;35m{0}\033[m.".format(region[0]))
-
-        # data_file = self.data_file
-        pysam_depth = pysam.depth("-r{0}:1-{1}".format(region[0], region[1][0]), self.data_file, split_lines=True)
-        depth_list = []
-        depth_counts = 0
-        breadth_counts = 0
-        for line in pysam_depth:
-            depth_list.append(line.split("\t")[2])
-            depth_counts += int(line.split("\t")[2])
-            breadth_counts += 1
-
-        print("   -->Read coverage and depth analysis complete for \033[1;35m{0}\033[m.".format(region[0]))
-
-        return depth_counts / int(region[1][0]), breadth_counts / int(region[1][0])
 
 
 class deprecated:
