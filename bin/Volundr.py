@@ -1,42 +1,12 @@
 #!usr/bin/env python3
 """
-Volundr.py v 0.5.6
-    Aug. 29, 2018
-    Dennis A. Simpson
-    Removed the Single Cell Processing calls.
-Volundr.py v 0.5.6
-    March 24, 2018
-    Dennis A. Simpson
-    Removed Heatmap Generator.  This is now stand alone.  Added few coding changes for clarity.
-Volundr.py v 0.5.3
-    July 25, 2017
-    Dennis A. Simpson
-    Added some code to deal with Killdevil.
-Volundr.py v 0.5.0
-    February 13, 2017
-    Dennis A. Simpson
-    Alignment launcher integrated.  Ability to do FASTQ quality and alignment using a single call.
-Volundr.py v 0.3.0
-    December 26, 2016
-    Dennis A. Simpson
-    Added call to FASTQ quality analysis.
-Volundr.py v 0.2.1
-    November 30, 2016
-    Dennis A. Simpson
-    Changed versioning to conform to semantic versioning (http://semver.org/).  Code cleaning.  Made more compact.
-Volundr.py v 0.2
-    August 27, 2016
-    Dennis A. Simpson
-    Added links to more modules and submodules.
-Volundr.py v 0.15
-    September 30, 2015
-    Dennis A. Simpson
+Volundr.py v 1.0.0
     Entry point for the Volundr bioinformatics package.
 
 @author: Dennis A. Simpson
          University of North Carolina at Chapel Hill
          Chapel Hill, NC  27599
-@copyright: 2016
+@copyright: 2019
 """
 
 import argparse
@@ -48,8 +18,8 @@ import Valkyries.Tool_Box as Tool_Box
 import sys
 
 __author__ = 'Dennis A. Simpson'
-__version__ = '0.7.0'
-__package__ = 'Volundr'
+__version__ = '1.0.0'
+__package__ = 'Völundr'
 
 
 def main(command_line_args=None):
@@ -66,13 +36,20 @@ def main(command_line_args=None):
 
     options_parser = Tool_Box.options_file(parser)
     args = options_parser.parse_args()
+
+    # If we are doing statistical analysis the user will not input an Index_Mismatch value
+    if not getattr(args, "Index_Mismatch", False):
+        options_parser.add_argument("--Index_Mismatch", dest="Index_Mismatch", default=0)
+        options_parser.add_argument("--Analyze_Unknowns", dest="Analyze_Unknowns", default="False")
+        args = options_parser.parse_args()
+
     log = Tool_Box.Logger(args)
     Tool_Box.log_environment_info(log, args, command_line_args)
     start_time = time.time()
     module_name = "Synthetic_Lethal"
 
     log.info("{0} v{1}; Module: Synthetic Lethal Analysis v{2} Beginning"
-                 .format(__package__, __version__, Synthetic_Lethal.__version__))
+             .format(__package__, __version__, Synthetic_Lethal.__version__))
 
     sl = Synthetic_Lethal.SyntheticLethal(log, args)
 
