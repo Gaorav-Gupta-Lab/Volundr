@@ -16,8 +16,8 @@ Created on Fri Dec 18 12:59:12 2015
 @copyright: 2016
 """
 
-from Levenshtein import distance
 import csv
+from Levenshtein import distance
 from Valkyries.Tool_Box import deprecated
 
 __author__ = 'Dennis A. Simpson'
@@ -100,7 +100,7 @@ def rcomp(seq):
         comp_seq = rseq.translate(ttable)
 
         return comp_seq
-    
+
     _complement(''.join(reversed(seq)))
 
 
