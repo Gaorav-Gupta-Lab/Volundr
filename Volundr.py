@@ -8,21 +8,26 @@ Volundr.py v 1.0.0
          Chapel Hill, NC  27599
 @copyright: 2019
 """
-
+import os
+import sys
 import argparse
 from argparse import RawTextHelpFormatter
 import time
+from distutils.util import strtobool
 import volundr.Synthetic_Lethal as Synthetic_Lethal
 import Valkyries.Version_Dependencies as VersionDependencies
 import Valkyries.Tool_Box as Tool_Box
-import sys
 
 __author__ = 'Dennis A. Simpson'
-__version__ = '1.0.0'
+__version__ = '1.0.1'
 __package__ = 'Völundr'
 
 
 def main(command_line_args=None):
+    """
+
+    :param command_line_args:
+    """
     VersionDependencies.python_check()
 
     if not command_line_args:
@@ -34,38 +39,86 @@ def main(command_line_args=None):
     parser.add_argument('--options_file', action='store', dest='options_file', required=True,
                         help='File containing program parameters.')
 
-    options_parser = Tool_Box.options_file(parser)
-    args = options_parser.parse_args()
+    # Convert universal variables intended as boolean from string to boolean.
+    args, options_parser = string_to_boolean(Tool_Box.options_file(parser))
 
-    # If we are doing statistical analysis the user will not input an Index_Mismatch value
-    if not getattr(args, "Index_Mismatch", False):
-        options_parser.add_argument("--Index_Mismatch", dest="Index_Mismatch", default=0)
-        options_parser.add_argument("--Analyze_Unknowns", dest="Analyze_Unknowns", default="False")
-        args = options_parser.parse_args()
+    # Check file names and paths for errors
+    error_checking(args)
 
     log = Tool_Box.Logger(args)
     Tool_Box.log_environment_info(log, args, command_line_args)
+
     start_time = time.time()
     module_name = "Synthetic_Lethal"
 
     log.info("{0} v{1}; Module: Synthetic Lethal Analysis v{2} Beginning"
              .format(__package__, __version__, Synthetic_Lethal.__version__))
 
-    sl = Synthetic_Lethal.SyntheticLethal(log, args)
+    synthetic_lethal = Synthetic_Lethal.SyntheticLethal(log, args)
 
-    if eval(args.Target_Search):
-        sl.fastq_analysis()
-    elif eval(args.Statistics):
-        sl.statistics()
-    elif eval(args.Combine_Replicates):
-        sl.combo_test()
+    if args.Target_Search:
+        synthetic_lethal.fastq_analysis()
+    elif args.Statistics:
+        synthetic_lethal.statistics()
     else:
         log.error('No module selected to run.')
 
     warning = "\033[1;31m **See warnings above**\033[m" if log.warning_occurred else ''
     elapsed_time = int(time.time() - start_time)
-    log.info("****Volundr {0} complete ({1} seconds, {2} Mb peak memory).****"
+    log.info("****Völundr {0} complete ({1} seconds, {2} Mb peak memory).****\n{3}"
              .format(module_name, elapsed_time, Tool_Box.peak_memory(), warning))
+
+
+def error_checking(args):
+    """
+    Make sure all paths and files exist.
+    :param args:
+    """
+    if not os.path.exists(args.Working_Folder):
+        print("\033[1;31mERROR:\n\t--Working_Folder: {} Not Found.  Check Options File."
+              .format(args.Working_Folder))
+        raise SystemExit(1)
+
+    if not os.path.isfile(args.Target_File):
+        print("\033[1;31mERROR:\n\t--Target_File: {} Not Found.  Check Options File."
+              .format(args.Working_Folder))
+        raise SystemExit(1)
+
+    if not os.path.isfile(args.Master_Index_File):
+        print("\033[1;31mERROR:\n\t--Master_Index_File: {} Not Found.  Check Options File."
+              .format(args.Working_Folder))
+        raise SystemExit(1)
+
+    if not os.path.isfile(args.Index_File):
+        print("\033[1;31mERROR:\n\t--Index_File: {} Not Found.  Check Options File."
+              .format(args.Working_Folder))
+        raise SystemExit(1)
+
+
+def string_to_boolean(options_parser):
+    """
+    Converts strings to boolean.  Done to keep the eval() function out of the code.
+    :param options_parser:
+    :return:
+    """
+    args = options_parser.parse_args()
+
+    options_parser.set_defaults(Target_Search=bool(strtobool(args.Target_Search)))
+    options_parser.set_defaults(Statistics=bool(strtobool(args.Statistics)))
+
+    if not getattr(args, "Index_Mismatch", False):
+        options_parser.add_argument("--Index_Mismatch", dest="Index_Mismatch", default=0)
+        options_parser.add_argument("--Analyze_Unknowns", dest="Analyze_Unknowns", default="False")
+
+    if args.Target_Search == "True":
+        options_parser.set_defaults(Analyze_Unknowns=bool(strtobool(args.Analyze_Unknowns)))
+        options_parser.set_defaults(RevComp=bool(strtobool(args.RevComp)))
+        options_parser.set_defaults(Delete_Demultiplexed_FASTQ=bool(strtobool(args.Delete_Demultiplexed_FASTQ)))
+        options_parser.set_defaults(Compress=bool(strtobool(args.Compress)))
+
+    args = options_parser.parse_args()
+
+    return args, options_parser
 
 
 if __name__ == '__main__':

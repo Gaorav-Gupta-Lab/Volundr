@@ -1,4 +1,9 @@
 """
+Tool_Box v0.3.1
+    Dennis A. Simpson
+    Changed if not os.path.isfile(input_file): to if not pathlib.Path(input_file).is_file(): in FilerParser.indices
+    to correct error on UNC research computing cluster.
+
 Tool_Box v0.3.0
     Various helper functions for use in Volundr.
 @author: Dennis A. Simpson
@@ -9,6 +14,7 @@ Tool_Box v0.3.0
 
 import csv
 import os
+import pathlib
 import warnings
 import functools
 from collections import namedtuple
@@ -27,7 +33,7 @@ import re
 import resource
 
 __author__ = 'Dennis A. Simpson'
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 
 def my_timer(func):
@@ -104,6 +110,11 @@ def delete(file_list):
 
 
 def sort_dict(key_counts):
+    """
+    Not so sure I need this any longer.
+    :param key_counts:
+    :return:
+    """
     return sorted(key_counts.items(), key=lambda x: (-1 * x[1], x[0]))
 
 
@@ -111,7 +122,6 @@ def compress_files(file):
     """
     This function will compress our files.  Takes a very long time.
     :param file:
-    :return:
     """
     # ToDo: Allow user access to gzip compression level.
     if os.path.isfile(file):
@@ -122,8 +132,6 @@ def compress_files(file):
         print("\t-->{0} Compressed".format(file))
     else:
         print("{0} not found.".format(file))
-
-    return
 
 
 def chromosomes(species, log, include_chrY):
@@ -200,7 +208,8 @@ class deprecated:
 
         return new_func
 
-    def __format_warning__(self, message, category, filename, lineno, file=None, line=None):
+    @staticmethod
+    def __format_warning__(message, category, filename, lineno):
         return '\n--> {}:{}: \033[1;31:\033[m {}\n\n'.format(
             filename, lineno, category.__name__, message)
 
@@ -229,17 +238,16 @@ class UsageError(Exception):
 
 
 class Logger:
+    """
+    Implementation of logger.  Needs work.
+    """
     _DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
     _FILE_LOG_FORMAT = '%(asctime)s|%(levelname)s|%(start_time)s|%(host)s|%(user)s|%(message)s'
     _CONSOLE_LOG_FORMAT = '%(asctime)s|%(levelname)s|%(message)s'
 
-    def __init__(self, args, console_stream=None, parellel_id=None):
+    def __init__(self, args, console_stream=None):
         self._verbose = args.Verbose
-        if parellel_id:
-            log_file = "{}_{}".format(args.Job_Name, parellel_id)
-        else:
-            log_file = args.Job_Name
-
+        log_file = args.Job_Name
         self._log_filename = "{0}{1}.log".format(args.Working_Folder, log_file)
 
         try:
@@ -287,6 +295,11 @@ class Logger:
         return log_message
 
     def debug(self, message, *args):
+        """
+        Handles debug messages.
+        :param message:
+        :param args:
+        """
         if self._verbose == "DEBUG":
             self._print("\033[96mDEBUG\033[m", message, args)
 
@@ -297,17 +310,38 @@ class Logger:
         method(self._format(message, args), extra=self._logging_dict)
 
     def error(self, message, *args):
+        """
+        Handles the error messages.
+        :param message:
+        :param args:
+        """
         self._log("\033[38;5;202mERROR\033[m", self._file_logger.error, message, *args)
 
     def info(self, message, *args):
+        """
+        Handles the information messages
+        :param message:
+        :param args:
+        """
         self._log("\033[38;5;220mINFO\033[m", self._file_logger.info, message, *args)
 
     def warning(self, message, *args):
+        """
+        Handles our warnings
+        :param message:
+        :param args:
+        """
         self._log("\033[1;31mWARNING\033[m", self._file_logger.warning, message, *args)
         self.warning_occurred = True
 
 
 def log_environment_info(log, args, command_line_args):
+    """
+    Sends our environment variables to the logger.
+    :param log:
+    :param args:
+    :param command_line_args:
+    """
     log.info("original_command_line|{}".format(' '.join(command_line_args)))
     log.info('command_options|{}'.format(args))
     log.info('Working_Folder|{}'.format(args.Working_Folder))
@@ -363,8 +397,11 @@ def options_file(options_parser):
 
 
 class FileParser:
+    """
+    Handles parsing our input files.
+    """
     @staticmethod
-    def options_file(options_file):
+    def options_file(parameter_file):
         """
         This function parses the file and returns an object.
         :return:
@@ -372,11 +409,11 @@ class FileParser:
         count = 0
         options_dictionary = collections.defaultdict(str)
 
-        if not os.path.isfile(options_file):
-            print("\033[1;31mWARNING:\n\tOptions_File {} Not Found.  Check File Name and Path.".format(options_file))
+        if not os.path.isfile(parameter_file):
+            print("\033[1;31mWARNING:\n\tOptions_File {} Not Found.  Check File Name and Path.".format(parameter_file))
             raise SystemExit(1)
 
-        options = csv.reader(open(options_file), delimiter='\t')
+        options = csv.reader(open(parameter_file), delimiter='\t')
 
         for line in options:
             count += 1
@@ -400,8 +437,9 @@ class FileParser:
         Parse the index file or target file and return a list of values.
         :return:
         """
-        if not os.path.isfile(input_file):
-            log.error("Index_File Not Found.  Check File Name and Path.")
+        # if not os.path.isfile(input_file):
+        if not pathlib.Path(input_file).is_file():
+            log.error("{} Not Found.  Check File Name and Path.".format(input_file))
             raise SystemExit(1)
 
         index_list = []

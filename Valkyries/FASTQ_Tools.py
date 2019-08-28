@@ -15,7 +15,7 @@ import ntpath
 import magic
 
 __author__ = 'Dennis A. Simpson'
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 
 class Writer:
@@ -48,6 +48,11 @@ class Writer:
         return True
 
     def write(self, read_list):
+        """
+        Write a block of text to new FASTQ file
+        :param read_list:
+        :return:
+        """
         outstring = ""
         for read in read_list:
             try:
@@ -64,6 +69,10 @@ class Writer:
         return True
 
     def close(self):
+        """
+        Close the FASTQ file
+        :return:
+        """
         self.file.close()
         return True
 
@@ -90,7 +99,10 @@ class FASTQ_Reader:
         self.fq_file = self.__fastq_file()
 
     def __fastq_file(self):
-
+        """
+        Handles opening the FASTQ file
+        :return:
+        """
         if len(self.input_file) < 3:
             self.log.warning("FASTQ file parameter missing from options file. Correct error and try again.")
             raise SystemExit(1)
@@ -114,17 +126,25 @@ class FASTQ_Reader:
         return fq_file
 
     def line_reader(self):
+        """
+        Part of the generator to read the FASTQ files
+        """
         for line in self.fq_file:
             while True:
                 yield line
 
     def seq_read(self):
-
+        """
+        generator to get sequence reads from FAST file into the appropriate blocks of 4 lines.
+        """
         read_block = []
+        count = 0
         eof = False
         try:
-            for i in range(4):
+            # for i in range(4):
+            while count < 4:
                 read_block.append(next(FASTQ_Reader.line_reader(self)))
+                count += 1
         except StopIteration:
             eof = True
 
@@ -144,11 +164,15 @@ class FASTQ_Reader:
 
         # I am using this as my EOF.  Not so sure the code ever reaches this.
         self.name = None
-        return
 
 
 def read_trim(fastq_read, trim5=None, trim3=None):
-
+    """
+    Trim any additional sequences
+    :param fastq_read:
+    :param trim5:
+    :param trim3:
+    """
     if trim5 and trim3:
         fastq_read.seq = fastq_read.seq[trim5:-trim3]
         fastq_read.qual = fastq_read.qual[trim5:-trim3]
