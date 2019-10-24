@@ -19,7 +19,7 @@ import Valkyries.Version_Dependencies as VersionDependencies
 import Valkyries.Tool_Box as Tool_Box
 
 __author__ = 'Dennis A. Simpson'
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 __package__ = 'Völundr'
 
 

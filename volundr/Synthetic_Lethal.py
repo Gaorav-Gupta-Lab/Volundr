@@ -1,7 +1,8 @@
 """
-Synthetic_Lethal.py 1.0.0
-    May 2, 2019
-    Ready for publication
+Synthetic_Lethal.py 2.0.0
+    August 30, 2019
+    Added multiple sample p-value correction.  Added percentile output.  Added output file for masked sgRNA sequences.
+    Added a library control and sample control option.
 
 @author: Dennis A. Simpson
          University of North Carolina at Chapel Hill
@@ -70,12 +71,13 @@ class SyntheticLethal:
         """
 
         self.fastq_processor()
-        self.log.info("Begin compressing FASTQ files with gzip.")
-        p = pathos.multiprocessing.Pool(int(self.args.Spawn))
-        p.starmap(Tool_Box.compress_files, zip(self.fastq_out_list))
+        if not self.args.Delete_Demultiplexed_FASTQ and self.args.Compress:
+            self.log.info("Begin compressing FASTQ files with gzip.")
+            p = pathos.multiprocessing.Pool(int(self.args.Spawn))
+            p.starmap(Tool_Box.compress_files, zip(self.fastq_out_list))
+
         self.log.info("Spawning \033[96m{0}\033[m parallel job(s) to search \033[96m{1}\033[m FASTQ files for targets"
                       .format(self.args.Spawn, len(self.fastq_out_list)))
-        raise SystemExit("Done Demultiplexing")
 
         multiprocessor_tmp_data_list = []
         p = pathos.multiprocessing.Pool(int(self.args.Spawn))
@@ -196,30 +198,32 @@ class SyntheticLethal:
                             return
 
                         working_dict[group_key][sample_name].append(td_norm_control_ratio)
-                        percentile_dict[sample_name].append(math.log2(td_norm_control_ratio))
+
+        log2_perm_data_string = ""
+        for group_key in natsort.natsorted(working_dict):
+            log2_perm_data_string += "\n{0}".format(group_key)
+
+            for sample_name in natsort.natsorted(working_dict[group_key]):
+
+                gmean_data = gmean(working_dict[group_key][sample_name])
+                log2_perm_data_string += "\t{}".format(round(math.log2(gmean_data), 4))
+                percentile_dict[sample_name].append(math.log2(gmean_data))
 
         sample_name_list = []
         upper_limit_list = []
         lower_limit_list = []
         for sample_name in natsort.natsorted(percentile_dict):
             lower_limit = \
-                str(numpy.percentile(numpy.array(percentile_dict[sample_name]), float(self.args.LowerPercentile)))
+                str(numpy.percentile(numpy.array(percentile_dict[sample_name]), float(self.args.LowerPercentile), interpolation='linear'))
             upper_limit = \
-                str(numpy.percentile(numpy.array(percentile_dict[sample_name]), float(self.args.UpperPercentile)))
+                str(numpy.percentile(numpy.array(percentile_dict[sample_name]), float(self.args.UpperPercentile), interpolation='linear'))
             sample_name_list.append(sample_name)
             lower_limit_list.append(lower_limit)
             upper_limit_list.append(upper_limit)
 
         log2_out_string += "Sample:\t{}\n".format("\t".join(sample_name_list))
         log2_out_string += "Upper Limit:\t{}\n".format("\t".join(upper_limit_list))
-        log2_out_string += "Lower Limit:\t{}\n\n".format("\t".join(lower_limit_list))
-
-        for group_key in natsort.natsorted(working_dict):
-            log2_out_string += "\n{0}".format(group_key)
-
-            for sample_name in natsort.natsorted(working_dict[group_key]):
-                gmean_data = gmean(working_dict[group_key][sample_name])
-                log2_out_string += "\t{}".format(round(math.log2(gmean_data), 4))
+        log2_out_string += "Lower Limit:\t{}\n\n{}".format("\t".join(lower_limit_list), log2_perm_data_string)
 
         log2_outfile = open("{0}{1}_Permuted_Log2_GMeans.txt".format(self.args.Working_Folder, self.args.Job_Name), 'w')
         log2_outfile.write(log2_out_string)
@@ -828,11 +832,12 @@ class SyntheticLethal:
 
                 t0 = clock()
                 # this block limits reads for debugging.
-                # Tool_Box.debug_messenger("Limiting reads here to 1.5 million")
-                # self.log.warning("Limiting reads here to 1.5 million")
-                # eof = True
+                Tool_Box.debug_messenger("Limiting reads here to 1.5 million")
+                self.log.warning("Limiting reads here to 1.5 million")
+                eof = True
             index_loop_count = 0
             query_sequence = ""
+
             if args.Platform == "Illumina":
                 # The indices are after the last ":" in the header.
                 query_sequence = fastq_read.name.split(":")[-1]
