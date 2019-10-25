@@ -71,10 +71,6 @@ class SyntheticLethal:
         """
 
         self.fastq_processor()
-        if not self.args.Delete_Demultiplexed_FASTQ and self.args.Compress:
-            self.log.info("Begin compressing FASTQ files with gzip.")
-            p = pathos.multiprocessing.Pool(int(self.args.Spawn))
-            p.starmap(Tool_Box.compress_files, zip(self.fastq_out_list))
 
         self.log.info("Spawning \033[96m{0}\033[m parallel job(s) to search \033[96m{1}\033[m FASTQ files for targets"
                       .format(self.args.Spawn, len(self.fastq_out_list)))
@@ -832,9 +828,10 @@ class SyntheticLethal:
 
                 t0 = clock()
                 # this block limits reads for debugging.
-                Tool_Box.debug_messenger("Limiting reads here to 1.5 million")
-                self.log.warning("Limiting reads here to 1.5 million")
-                eof = True
+                if self.args.Verbose.upper() == "DEBUG":
+                    Tool_Box.debug_messenger("Limiting reads here to 1.5 million")
+                    self.log.warning("Limiting reads here to 1.5 million")
+                    eof = True
             index_loop_count = 0
             query_sequence = ""
 
