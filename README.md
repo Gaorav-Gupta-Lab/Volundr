@@ -20,7 +20,7 @@ Minimum System Requirements:
     ~5x the size of the compressed FASTQ file for disk space.
 
 Required Python Libraries:
-    Python ≥v3.4
+    Python ≥v3.5
     numpy
     scipy
     python-levenshtein
@@ -41,7 +41,7 @@ Exact steps coming soon
 ```
 
 ## Usage
-The recomended method to run is using a bash shell as described in the user guide.
+The recommended method to run is using a bash shell as described in the user guide.
 
 Völundr can be run from the command line.  If installed by cloning or downloading the repository:
 ```
@@ -64,7 +64,7 @@ Please make sure to update tests as appropriate.
 
 ## Cite
 
-[![PubMed](img/2318832.png)](https://www.ncbi.nlm.nih.gov/pubmed/28649649)
+[![PubMed](img/2318832.png)](https://www.ncbi.nlm.nih.gov/pubmed/31537809)
 
 ## License
 
