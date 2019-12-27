@@ -57,10 +57,11 @@ class SyntheticLethal:
         self.targets = collections.defaultdict(list)
         self.args = args
         self.sample_td_norm_dict = collections.defaultdict(lambda: collections.defaultdict(float))
-        self.index_list = Tool_Box.FileParser.indices(log, self.args.Index_File)
+        self.SampleManifest = Tool_Box.FileParser.indices(log, self.args.SampleManifest)
         self.fastq_read_counts = [0, 0, 0, 0]  # Tracks number of reads in input file.
         self.log = log
-        self.index_dict, self.fastq_file_dict, self.fastq_out_list, self.master_index_dict = \
+        self.permuted_null_dict = None
+        self.sample_data_dict, self.fastq_file_dict, self.fastq_out_list, self.master_index_dict = \
             SyntheticLethal.dictionary_builds(self)
 
     def fastq_analysis(self):
@@ -80,7 +81,7 @@ class SyntheticLethal:
         multiprocessor_tmp_data_list.append(
             p.starmap(self.target_search,
                       zip(self.fastq_out_list,
-                          itertools.repeat((self.args, self.targets, self.log, self.index_dict)))))
+                          itertools.repeat((self.args, self.targets, self.log, self.sample_data_dict)))))
 
         self.log.info(" ***All Parallel Jobs Complete.***")
 
@@ -114,9 +115,6 @@ class SyntheticLethal:
         self.gene_group()
         self.log.info("Gene data manipulations complete.")
 
-        #  Determine significance and output some nice data.
-        # self.kolmogorov_smirnov2()
-
         self.kolmogorov_smirnov3()
 
     def control_permutation(self):
@@ -127,7 +125,7 @@ class SyntheticLethal:
         """
 
         self.log.info("\033[93mBegin Control Permutation Analysis.\033[m")
-
+        self.permuted_null_dict = collections.defaultdict(list)
         log2_out_string = \
             "Sample Permutations\nFile Generated:\t{}\nControl Sample:\t{}\nLibrary Control:\t{}\n" \
             "Upper Percentile:\t{}\nLower Percentile:\t{}\n\n"\
@@ -155,18 +153,18 @@ class SyntheticLethal:
                 selection_space.append(control_target_key)
                 selection_data_dict[control_target_key].append(self.control_td_norm_dict[sample_name]
                                                                [control_target_key])
+        if self.args.Write_TDnorm_Log2_sgRNA_Control_File:
+            for control_target_name in selection_data_dict:
+                raw_data_string += "\n{0}".format(control_target_name)
+                for v in selection_data_dict[control_target_name]:
+                    raw_data_string += "\t{0}".format(math.log2(float(v)))
 
-        for control_target_name in selection_data_dict:
-            raw_data_string += "\n{0}".format(control_target_name)
-            for v in selection_data_dict[control_target_name]:
-                raw_data_string += "\t{0}".format(math.log2(float(v)))
-
-        # Write Log2 control target data to a file by itself.
-        raw_data_out_string = "{0}{1}".format(raw_data_header, raw_data_string)
-        raw_data_outfile = \
-            open("{0}{1}_TDnorm_Log2_Control_Targets.txt".format(self.args.Working_Folder, self.args.Job_Name), 'w')
-        raw_data_outfile.write(raw_data_out_string)
-        raw_data_outfile.close()
+            # Write Log2 control target data to a file by itself.
+            raw_data_out_string = "{0}{1}".format(raw_data_header, raw_data_string)
+            raw_data_outfile = \
+                open("{0}{1}_TDnorm_Log2_Control_Targets.txt".format(self.args.Working_Folder, self.args.Job_Name), 'w')
+            raw_data_outfile.write(raw_data_out_string)
+            raw_data_outfile.close()
 
         # Define some parameters and start the permutations.  Permutations are done based on the control target labels.
         working_dict = collections.defaultdict(lambda: collections.defaultdict(list))
@@ -210,66 +208,27 @@ class SyntheticLethal:
         lower_limit_list = []
         for sample_name in natsort.natsorted(percentile_dict):
             lower_limit = \
-                str(numpy.percentile(numpy.array(percentile_dict[sample_name]), float(self.args.LowerPercentile), interpolation='linear'))
+                str(numpy.percentile(numpy.array(percentile_dict[sample_name]), float(self.args.LowerPercentile),
+                                     interpolation='linear'))
             upper_limit = \
-                str(numpy.percentile(numpy.array(percentile_dict[sample_name]), float(self.args.UpperPercentile), interpolation='linear'))
+                str(numpy.percentile(numpy.array(percentile_dict[sample_name]), float(self.args.UpperPercentile),
+                                     interpolation='linear'))
             sample_name_list.append(sample_name)
             lower_limit_list.append(lower_limit)
             upper_limit_list.append(upper_limit)
+            self.permuted_null_dict[sample_name] = [upper_limit, lower_limit]
 
-        log2_out_string += "Sample:\t{}\n".format("\t".join(sample_name_list))
-        log2_out_string += "Upper Limit:\t{}\n".format("\t".join(upper_limit_list))
-        log2_out_string += "Lower Limit:\t{}\n\n{}".format("\t".join(lower_limit_list), log2_perm_data_string)
+        if self.args.Write_Permuted_Log2_Data_File:
+            log2_out_string += "Sample:\t{}\n".format("\t".join(sample_name_list))
+            log2_out_string += "Upper Limit:\t{}\n".format("\t".join(upper_limit_list))
+            log2_out_string += "Lower Limit:\t{}\n\n{}".format("\t".join(lower_limit_list), log2_perm_data_string)
 
-        log2_outfile = open("{0}{1}_Permuted_Log2_GMeans.txt".format(self.args.Working_Folder, self.args.Job_Name), 'w')
-        log2_outfile.write(log2_out_string)
-        log2_outfile.close()
+            log2_outfile = \
+                open("{0}{1}_Permuted_Log2_GMeans.txt".format(self.args.Working_Folder, self.args.Job_Name), 'w')
+            log2_outfile.write(log2_out_string)
+            log2_outfile.close()
 
         self.log.info("Permutation Analysis Complete.")
-
-    def kolmogorov_smirnov2(self):
-        """
-        Do a Kolmogorov_Smirnov test on the target sets for each library excluding the no index.  Done on the difference
-        with control library.  Writes a file for each library continuing the Log2 delta value and the p-value for each
-        gene.
-
-        :return:
-        """
-
-        self.log.info("\033[93mBegin Kolmogorov-Smirnov2 analysis.\033[m")
-
-        for sample_name in self.tc_norm_dict:
-            if sample_name == "Unknown":
-                continue
-
-            # Read TC_norm data for working library into dictionary.
-            tc_control_list = []
-
-            for tc_control_value in self.tc_norm_dict[sample_name][self.args.Species]:
-                tc_control_list.append(tc_control_value-self.gtc_norm_dict[sample_name][self.args.Species])
-
-            out_file = open("{0}{1}_{2}_KS2_Log2_Delta_Genes.txt"
-                            .format(self.args.Working_Folder, self.args.Job_Name, sample_name), "w")
-            out_string = "Gene\tLog2\tp-value"
-
-            for gene in natsort.natsorted(self.tc_norm_dict[sample_name]):
-                ks2_list = []
-                for tc_norm_value in self.tc_norm_dict[sample_name][gene]:
-                    ks2_list.append(tc_norm_value-self.gtc_norm_dict[sample_name][gene])
-
-                try:
-                    v = ks_2samp(tc_control_list, ks2_list)
-                except RuntimeWarning:
-                    v = [1, 1]
-
-                gene_value = \
-                    round(self.gene_data_dict[gene][sample_name]-self.gene_data_dict[gene][self.args.Control_Sample], 6)
-                out_string += "\n{0}\t{1}\t{2}".format(gene, gene_value, round(v[1], 6))
-
-            out_file.write(out_string)
-            out_file.close()
-
-        self.log.info("Kolmogorov-Smirnov2 analysis complete.")
 
     def kolmogorov_smirnov3(self):
         """
@@ -283,14 +242,16 @@ class SyntheticLethal:
         self.log.info("\033[93mBegin Kolmogorov-Smirnov3 analysis.\033[m")
 
         for sample_name in self.tc_norm_dict:
-            if sample_name in ["Unknown", "Plasmid"]:
+            if sample_name in ["Unknown", self.args.Library_Control]:
                 continue
 
             working_library_dict = collections.defaultdict(list)
             run_date = datetime.datetime.today().strftime("%a %b %d %H:%M:%S %Y")
-            out_string = "{}\nSample:\t{}\nControl Sample:\t{}\nLibrary Control:\t{}\nAlpha:\t{}\n\nGene\tLog2\t" \
+            out_string = "{}\nSample:\t{}\nControl Sample:\t{}\nLibrary Control:\t{}\nAlpha:\t{}\n" \
+                         "Upper Null Set Limit:\t{}\nLower Null Set Limit:\t{}\n\nGene\tLog2\t" \
                          "Original p-value\tCorrected p-value\tReject Null Hypothesis"\
-                .format(run_date, sample_name, self.args.Control_Sample, self.args.Library_Control, self.args.Alpha)
+                .format(run_date, sample_name, self.args.Control_Sample, self.args.Library_Control, self.args.Alpha,
+                        self.permuted_null_dict[sample_name][0], self.permuted_null_dict[sample_name][1])
 
             p_value_list = []
             out_string_list = []
@@ -336,54 +297,6 @@ class SyntheticLethal:
 
         self.log.info("Kolmogorov-Smirnov3 analysis complete.")
 
-    def kolmogorov_smirnov(self):
-        """
-        Do a Kolmogorov_Smirnov test on the target sets for each library excluding the no index.  Done on the difference
-        with control library.  Writes a file for each library continuing the Log2 delta value and the p-value for each
-        gene.
-
-        :return:
-        """
-
-        self.log.info("\033[93mBegin Kolmogorov-Smirnov analysis.\033[m")
-
-        for sample_name in self.sample_td_norm_dict:
-            if sample_name in ["Unknown", "Plasmid", self.args.Control_Sample]:
-                continue
-
-            # Read TD_norm data for working library into dictionary.
-            working_library_dict = collections.defaultdict(list)
-            control_list = []
-
-            for target_name in self.sample_td_norm_dict[sample_name]:
-                gene_name = target_name.split("_")[0]
-                log2_td_norm = math.log2(self.sample_td_norm_dict[sample_name][target_name])
-
-                try:
-                    log2_control_value = math.log2(self.sample_td_norm_dict[self.args.Control_Sample][target_name])
-                except ValueError:
-                    self.log.error("{} control sample not present.  Kolmogorov-Smirnov testing aborted."
-                                   .format(self.args.Control_Sample))
-                    return
-
-                if gene_name == self.args.Species:
-                    control_list.append(log2_td_norm-log2_control_value)
-                working_library_dict[gene_name].append(log2_td_norm - log2_control_value)
-
-            out_file = open("{0}{1}_{2}_KS_Log2_Delta_Genes.txt"
-                            .format(self.args.Working_Folder, self.args.Job_Name, sample_name), "w")
-            out_string = "Gene\tLog2\tp-value"
-
-            for gene in natsort.natsorted(working_library_dict):
-                v = ks_2samp(control_list, working_library_dict[gene])
-                gene_value = \
-                    round(self.gene_data_dict[gene][sample_name]-self.gene_data_dict[gene][self.args.Control_Sample], 6)
-                out_string += "\n{0}\t{1}\t{2}".format(gene, gene_value, round(v[1], 6))
-            out_file.write(out_string)
-            out_file.close()
-
-        self.log.info("Kolmogorov-Smirnov analysis complete.")
-
     def gene_group(self):
         """
         Collapse set of TDnorm target values for each gene into a single Log2 value.  Uses Geometric Mean to collapse
@@ -409,11 +322,18 @@ class SyntheticLethal:
                 td_norm = self.sample_td_norm_dict[sample_name][target_name]
 
                 tmp_delta_dict[gene_name]\
-                    .append((td_norm + 1.0e-10) / (self.sample_td_norm_dict[self.args.Control_Sample][target_name] + 1.0e-10))
+                    .append((td_norm + 1.0e-10) / (self.sample_td_norm_dict[self.args.Control_Sample][target_name]
+                                                   + 1.0e-10))
+                
                 tmp_dict[gene_name].append(td_norm + 1.0e-10)
 
             for gene in natsort.natsorted(tmp_dict):
-                gene_value = math.log2(gmean(tmp_dict[gene]) - 1.0e-10)
+                # Sometimes all the guides are 0.
+                try:
+                    gene_value = math.log2(gmean(tmp_dict[gene]) - 1.0e-10)
+                except ValueError:
+                    gene_value = math.log2(1.0e-10)
+
                 gene_data_dict[gene][sample_name] = gene_value
 
                 delta_gene_value = math.log2(gmean(tmp_delta_dict[gene]))
@@ -432,15 +352,17 @@ class SyntheticLethal:
 
                 delta_out_string += "\t{0}".format(delta_gene_data_dict[gene][sample_name])
 
-        delta_out_file = \
-            open("{0}{1}_Log2_Delta_{2}_Genes.txt".format(self.args.Working_Folder, self.args.Job_Name,
+        if self.args.Verbose == "DEBUG":
+            delta_out_file = \
+                open("{0}{1}_Log2_Delta_{2}_Genes.txt".format(self.args.Working_Folder, self.args.Job_Name,
                                                           self.args.Control_Sample), "w")
-        delta_out_file.write(delta_out_string)
-        delta_out_file.close()
+            delta_out_file.write(delta_out_string)
+            delta_out_file.close()
 
-        log_out_file = open("{0}{1}_Log2_Genes.txt".format(self.args.Working_Folder, self.args.Job_Name), "w")
-        log_out_file.write(log_out_string)
-        log_out_file.close()
+        if self.args.Write_Log2_sgRNA_File:
+            log_out_file = open("{0}{1}_Log2_Genes.txt".format(self.args.Working_Folder, self.args.Job_Name), "w")
+            log_out_file.write(log_out_string)
+            log_out_file.close()
 
         self.gene_data_dict = gene_data_dict
 
@@ -479,14 +401,16 @@ class SyntheticLethal:
                 out_string += "\t{0}\t{1}".format(td_norm, math.log2(td_norm))
                 self.sample_td_norm_dict[sample_name][target_name] = td_norm
 
-            out_file = open("{0}{1}_{2}_TD_norm.txt"
-                            .format(self.args.Working_Folder, self.args.Job_Name, sample_name), "w")
-            out_file.write(out_string)
-            out_file.close()
+            if self.args.Write_TDnorm_Log2_sgRNA_Sample_File:
+                out_file = open("{0}{1}_{2}_TD_norm.txt"
+                                .format(self.args.Working_Folder, self.args.Job_Name, sample_name), "w")
+                out_file.write(out_string)
+                out_file.close()
 
     def tc_norm(self):
         """
         This does the calculations to normalize the raw CRISPR sgRNA counts to the total counts for the library.
+        :rtype: object
         """
         library_index_target_counts = collections.defaultdict(int)
         sample_tc_data = collections.defaultdict(float)
@@ -495,15 +419,16 @@ class SyntheticLethal:
         tmp_bad_targets_dict = collections.defaultdict(int)
         bad_targets_list = []
         percentile_list = []
-        expected_diversity_list = []
+
         # Check library control for drop outs.
         for library_index in self.sample_mapping_dict[self.args.Library_Control]:
             try:
                 tmp_data_file = open("{0}{1}_{2}_target_counts.txt"
-                                     .format(self.args.Working_Folder, self.args.Job_Name, library_index))
+                                     .format(self.args.DataFiles, self.args.Job_Name, library_index))
             except FileNotFoundError:
                 self.log.error("{0}_{1}_target_counts.txt not found".format(self.args.Job_Name, library_index))
-                continue
+                raise SystemExit(1)
+
             first_line = True
 
             # Go through each target in the Library Control target counts file.
@@ -521,30 +446,28 @@ class SyntheticLethal:
 
             tmp_data_file.close()
             total_sublibrary_control_counts = sum(tmp_bad_targets_dict.values())
-            total_guides = len(tmp_bad_targets_dict)
-            expected_diversity_list.append(0.05*((total_sublibrary_control_counts/total_guides)/total_sublibrary_control_counts))
+
             for target_name, target_count in tmp_bad_targets_dict.items():
                 bad_targets_dict[target_name].append((target_count/total_sublibrary_control_counts)+1.0e-10)
                 percentile_list.append(target_count/total_sublibrary_control_counts)
 
             tmp_bad_targets_dict.clear()
 
-        # Check for missing Library Control Targets.
-        bad_target_cutoff = numpy.percentile(numpy.array(percentile_list), 2.5)
-        # bad_target_cutoff = gmean(expected_diversity_list)
+        # Check for missing or vastly under represented Library Control Targets.
+        bad_target_cutoff = numpy.percentile(numpy.array(percentile_list), float(self.args.Bad_sgRNA_Percentile))
         percentile_list.clear()
 
-        bad_target_outstring = "Targets excluded from analysis.\nFile Generated {}\nLibrary Control File: {}\n" \
-                               "2.5 Percentile gTCnorm Cutoff: {}\n\nsgRNA Name\tgTCnorm\n"\
+        bad_target_outstring = "sgRNA Targets excluded from analysis.\nFile Generated {}\nLibrary Control File: {}\n" \
+                               "{} Percentile gTCnorm Cutoff: {}\n\nsgRNA Name\tgTCnorm\n"\
             .format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), self.args.Library_Control,
-                    format(bad_target_cutoff, '.4g'))
+                    self.args.Bad_sgRNA_Percentile, format(bad_target_cutoff, '.4g'))
 
         for target_name in bad_targets_dict:
-            if target_name not in self.target_dict:
+            if self.args.TargetSearch and target_name not in self.target_dict:
                 self.log.error("{} not found in {}.  Confirm correct Target File is being used."
                                .format(target_name, self.args.Target_File))
 
-            if gmean(bad_targets_dict[target_name]) <= bad_target_cutoff or target_name == "53BP1-intron":
+            if gmean(bad_targets_dict[target_name]) <= bad_target_cutoff:
                 bad_targets_list.append(target_name)
                 bad_value = format(gmean(bad_targets_dict[target_name])-1.0e-10, '.4g')
 
@@ -557,8 +480,8 @@ class SyntheticLethal:
                 self.log.warning("Masking {} with a gTCnorm of {} in control {}"
                                  .format(target_name, bad_value, self.args.Library_Control))
 
-        bad_guide_outfile = open("{}{}_Masked_Targets.txt"
-                                 .format(self.args.Working_Folder, self.args.Job_Name), 'w')
+        bad_guide_outfile = open("{}{}_{}_Masked_Targets.txt"
+                                 .format(self.args.Working_Folder, self.args.Job_Name, self.args.Library_Control), 'w')
 
         bad_guide_outfile.write(bad_target_outstring)
         bad_guide_outfile.close()
@@ -573,10 +496,10 @@ class SyntheticLethal:
 
                 try:
                     tmp_data_file = open("{0}{1}_{2}_target_counts.txt"
-                                         .format(self.args.Working_Folder, self.args.Job_Name, library_index))
+                                         .format(self.args.DataFiles, self.args.Job_Name, library_index))
                 except FileNotFoundError:
                     self.log.error("{0}_{1}_target_counts.txt not found".format(self.args.Job_Name, library_index))
-                    continue
+                    raise SystemExit(1)
 
                 first_line = True
                 target_data_list = []
@@ -642,11 +565,11 @@ class SyntheticLethal:
         run_param_out = open("{0}{1}_summary.txt".format(args.Working_Folder, args.Job_Name), "w")
         run_stop = datetime.datetime.today().strftime(self.date_format)
         run_param_out.write("Running:\t{0} Synthetic_Lethal v{1}\nStart_Time:\t{2}\nStop_Time\t{3}\nFASTQ_File:\t{4}\n"
-                            "INDEX_File:\t{5}\nTarget_File:\t{6}\nIndex_Mismatches\t{7}\nTarget_Mismatches\t{8}\n"
+                            "SampleManifest:\t{5}\nTarget_File:\t{6}\nIndex_Mismatches\t{7}\nTarget_Mismatches\t{8}\n"
                             "Target_Padding\t{9}\nExpected_Position\t{10}\nMin_Read_length\t{11}\nTarget_Start\t{12}\n"
                             "Target_Length\t{13}\nTotal_Reads:\t{14}\nIndexed_Reads:\t{15}\nUnknown_Count:\t{16}\n"
                             "Unknown_Short_Count:\t{17}\nUnknown_Full_Length_Count:\t{18}\n\n{19}"
-                            .format(__package__, __version__, self.run_start, run_stop, args.FASTQ1, args.Index_File,
+                            .format(__package__, __version__, self.run_start, run_stop, args.FASTQ1, args.SampleManifest,
                                     args.Target_File, args.Index_Mismatch, args.Target_Mismatch, args.Target_Padding,
                                     args.Expected_Position, args.Min_Length, args.Target_Start, args.Target_Length,
                                     self.fastq_read_counts[0], self.fastq_read_counts[0] - self.fastq_read_counts[1],
@@ -670,20 +593,20 @@ class SyntheticLethal:
             except TypeError:
                 continue
 
-            index_name = self.index_dict[index_seq][4]
+            index_name = self.sample_data_dict[index_seq][4]
             # Index Name, Sample Name, Sample Replica
             param_string += "{}\t{}\t{}\t{}\t{}\t{}"\
-                .format(index_name, self.index_dict[index_seq][5], self.index_dict[index_seq][6],
-                        self.index_dict[index_seq][1], self.index_dict[index_seq][2], self.index_dict[index_seq][3])
+                .format(index_name, self.sample_data_dict[index_seq][5], self.sample_data_dict[index_seq][6],
+                        self.sample_data_dict[index_seq][1], self.sample_data_dict[index_seq][2], self.sample_data_dict[index_seq][3])
 
             # Mismatched counts
-            for i in range(len(self.index_dict[index_seq][0])):
-                param_string += "\t{0}".format(self.index_dict[index_seq][0][i])
+            for i in range(len(self.sample_data_dict[index_seq][0])):
+                param_string += "\t{0}".format(self.sample_data_dict[index_seq][0][i])
 
             # Targeted, Not Targeted, Fraction Targeted.
             param_string += "\t{}\t{}\t{}\n"\
-                .format(data[0], int(self.index_dict[index_seq][1]) - int(data[0]),
-                        int(data[0])/int(self.index_dict[index_seq][1]))
+                .format(data[0], int(self.sample_data_dict[index_seq][1]) - int(data[0]),
+                        int(data[0]) / int(self.sample_data_dict[index_seq][1]))
 
         run_param_out.write(param_string)
         run_param_out.close()
@@ -700,37 +623,38 @@ class SyntheticLethal:
         fastq_out_list = []
         master_index_dict = {}
         fastq_file_dict = collections.defaultdict(object)
-        index_dict = {"Unknown": [[0] * (int(self.args.Index_Mismatch) + 1), 0, 0, 0, "Unknown", "Unknown", "Unknown"]}
+        sample_data_dict = \
+            {"Unknown": [[0] * (int(self.args.Index_Mismatch) + 1), 0, 0, 0, "Unknown", "Unknown", "Unknown"]}
 
         with open(self.args.Master_Index_File) as f:
             for l in f:
                 if "#" in l or not l:
                     continue
                 l_list = [x for x in l.strip("\n").split("\t")]
-                master_index_dict[l_list[0]] = l_list[1]
+                master_index_dict[l_list[0]] = "{}+{}".format(l_list[1], l_list[2])
 
-        for sample in self.index_list:
-            index_sequence = master_index_dict[sample[0]]
-            if index_sequence in index_dict:
+        for sample in self.SampleManifest:
+            index_name = sample[0]
+            if index_name in sample_data_dict:
                 self.log.error("The index {0} is duplicated.  Correct the error in {1} and try again."
-                               .format(sample[0], self.args.Index_File))
+                               .format(sample[0], self.args.SampleManifest))
                 raise SystemExit(1)
 
             # for each sample name append a list of all index ID's
             self.sample_mapping_dict[sample[1]].append(sample[0])
-            index_dict[index_sequence] = \
+            sample_data_dict[index_name] = \
                 [[0]*(int(self.args.Index_Mismatch)+1), 0, 0, 0, sample[0], sample[1], sample[2]]
 
-            if self.args.Target_Search:
-                fastq_file_dict[index_sequence] = \
+            if self.args.TargetSearch:
+                fastq_file_dict[index_name] = \
                     FASTQ_Tools.Writer(self.log, "{0}{1}_{2}.fastq"
-                                       .format(self.args.Working_Folder, self.args.Job_Name, index_sequence))
+                                       .format(self.args.Working_Folder, self.args.Job_Name, index_name))
 
                 fastq_out_list.append("{0}{1}_{2}.fastq"
-                                      .format(self.args.Working_Folder, self.args.Job_Name, index_sequence))
+                                      .format(self.args.Working_Folder, self.args.Job_Name, index_name))
 
         # This is for no index found.
-        self.index_list.append(("Unknown", "Unknown", "Unknown"))
+        self.SampleManifest.append(("Unknown", "Unknown", "Unknown"))
 
         if self.args.Analyze_Unknowns:
             master_index_dict["Unknown"] = "Unknown"
@@ -740,26 +664,30 @@ class SyntheticLethal:
 
             fastq_out_list.append("{0}{1}_Unknown.fastq".format(self.args.Working_Folder, self.args.Job_Name))
 
+        # If doing Statistics there is no need to run the sgRNA check.
+        if self.args.Statistics:
+            return sample_data_dict, fastq_file_dict, fastq_out_list, master_index_dict
+
         # Fill target list and dictionary.  Do initial quality check on target file for duplicates.
         target_list = []
-
         for target in Tool_Box.FileParser.indices(self.log, self.args.Target_File):
             try:
-                target_seq = target[2][int(self.args.Target_Start):][:int(self.args.Target_Length)]
+                target_seq = target[1][int(self.args.Target_Start):][:int(self.args.Target_Length)]
             except ValueError:
-                target_seq = target[2]
+                target_seq = target[1]
 
-            target_name = target[1]
+            target_name = target[0]
             target_list.append((target_seq, target_name))
             self.targets[len(target_seq)].append(target_seq)
 
             if target_seq in self.target_dict:
-                self.log.error("The target sequence in {0} is duplicated.  Correct the error in {1} and try again."
-                               .format(target, self.args.Target_File))
+                self.log.error("The sgRNA target sequence in {0} is duplicated.  Correct the error in {1} and try "
+                               "again.".format(target, self.args.Target_File))
                 raise SystemExit(1)
+
             elif target_seq in self.target_dict[target_name]:
-                self.log.error("Target name in {0} is duplicated.  Correct the error in {1} and try again."
-                               .format(target, self.args.Target_File))
+                self.log.error("sgRNA target name {0} is duplicated.  Correct the error in {1} and try again."
+                               .format(target_name, self.args.Target_File))
                 raise SystemExit(1)
 
             self.target_dict[target_name] = target_seq
@@ -787,7 +715,7 @@ class SyntheticLethal:
             self.log.info("{0} potential off target guides".format(off_target_count))
 
         self.log.info("Dictionaries Built")
-        return index_dict, fastq_file_dict, fastq_out_list, master_index_dict
+        return sample_data_dict, fastq_file_dict, fastq_out_list, master_index_dict
 
     def fastq_processor(self):
         """
@@ -802,7 +730,7 @@ class SyntheticLethal:
         t0 = clock()
         eof = False
         output_dict = collections.defaultdict(list)
-        index_count = len(self.index_dict)
+        index_count = len(self.sample_data_dict)
 
         while not eof:
             try:
@@ -818,19 +746,19 @@ class SyntheticLethal:
             self.fastq_read_counts[0] += 1
             index_found = False  # Flag for marking a read as having a known index.
 
-            if self.fastq_read_counts[0] % 1500000 == 0:
-                for index_seq in output_dict:
-                    self.fastq_file_dict[index_seq].write(output_dict[index_seq])
+            if self.fastq_read_counts[0] % 2000000 == 0:
+                for index_name in output_dict:
+                    self.fastq_file_dict[index_name].write(output_dict[index_name])
                 output_dict.clear()
                 gc.collect()
-                self.log.info("Processed 1,500,000 reads in {} seconds for a total of {:,} reads in file {}"
+                self.log.info("Processed 2,000,000 reads in {} seconds for a total of {:,} reads in file {}"
                               .format((clock() - t0), self.fastq_read_counts[0], ntpath.basename(self.fastq.file_name)))
 
                 t0 = clock()
                 # this block limits reads for debugging.
                 if self.args.Verbose.upper() == "DEBUG":
-                    Tool_Box.debug_messenger("Limiting reads here to 1.5 million")
-                    self.log.warning("Limiting reads here to 1.5 million")
+                    Tool_Box.debug_messenger("Limiting reads here to 2.0 million")
+                    self.log.warning("Limiting reads here to 2.0 million")
                     eof = True
             index_loop_count = 0
             query_sequence = ""
@@ -844,7 +772,11 @@ class SyntheticLethal:
                 raise SystemExit(1)
 
             while not index_found:
-                for index_seq in self.index_dict:
+                for index_name in self.sample_data_dict:
+                    if index_name != "Unknown":
+                        index_seq = self.master_index_dict[index_name]
+                    else:
+                        index_seq = "Unknown"
                     index_loop_count += 1
 
                     # No need to search for the "Unknown" key.
@@ -861,7 +793,7 @@ class SyntheticLethal:
 
                     if mismatch_index <= int(args.Index_Mismatch) and not unknown:
                         index_found = True
-                        self.index_dict[index_seq][1] += 1  # Total reads with index.
+                        self.sample_data_dict[index_name][1] += 1  # Total reads with index.
 
                         # Check read length and only output if the reads are long enough.
                         if len(fastq_read.seq) > int(args.Min_Length):
@@ -871,21 +803,21 @@ class SyntheticLethal:
                             fastq_read.name = "{0}|{1}".format(index_seq, fastq_read.name)
                             Read = collections.namedtuple('Read', 'name, seq, index, qual')
                             new_read = Read(fastq_read.name, fastq_read.seq, fastq_read.index, fastq_read.qual)
-                            output_dict[index_seq].append(new_read)
-                            self.index_dict[index_seq][2] += 1  # Full reads with index.
-                            self.index_dict[index_seq][0][mismatch_index] += 1  # Mismatch count.
+                            output_dict[index_name].append(new_read)
+                            self.sample_data_dict[index_name][2] += 1  # Full reads with index.
+                            self.sample_data_dict[index_name][0][mismatch_index] += 1  # Mismatch count.
                             break
                         else:
-                            self.index_dict[index_seq][3] += 1  # Short reads with index.
+                            self.sample_data_dict[index_name][3] += 1  # Short reads with index.
                         # Break the loop if nothing matches.
                     elif index_loop_count == index_count:
                         index_found = True
                         self.fastq_read_counts[1] += 1  # Total Unknown index reads in FASTQ file.
-                        self.index_dict["Unknown"][1] += 1  # Total reads without index.
+                        self.sample_data_dict["Unknown"][1] += 1  # Total reads without index.
 
                         if len(fastq_read.seq) > int(args.Min_Length):
                             self.fastq_read_counts[3] += 1  # Full reads with no index.
-                            self.index_dict["Unknown"][2] += 1  # Full reads with no index.
+                            self.sample_data_dict["Unknown"][2] += 1  # Full reads with no index.
                             if self.args.Analyze_Unknowns:
                                 head_seq = fastq_read.seq[:index_key_length]
                                 fastq_read.name = "Unknown|{0}|{1}".format(head_seq, fastq_read.name)
@@ -895,7 +827,7 @@ class SyntheticLethal:
                                 output_dict["Unknown"].append(new_read)
                         else:
                             self.fastq_read_counts[2] += 1  # Short reads with no index.
-                            self.index_dict["Unknown"][3] += 1  # Short reads with no index.
+                            self.sample_data_dict["Unknown"][3] += 1  # Short reads with no index.
 
         # Close all the open FASTQ files before proceeding.
         for index_seq in self.fastq_file_dict:
@@ -1011,11 +943,11 @@ class SyntheticLethal:
 
         # Format target count data for output file and write data to file.
         for line in target_file:
-            target_name = line[1]
+            target_name = line[0]
             if args.Target_Length == 'Variable':
-                target_key = line[2]
+                target_key = line[1]
             else:
-                target_key = line[2][int(args.Target_Start):][:int(args.Target_Length)]
+                target_key = line[1][int(args.Target_Start):][:int(args.Target_Length)]
             target_data_outstring += "\n{0}\t{1}".format(target_name, target_key)
             for i in range(int(args.Target_Mismatch)+1):
                 target_data_outstring += "\t{0}".format(target_count_dict[target_key][i])
@@ -1079,6 +1011,8 @@ class SyntheticLethal:
         """
         anchor_found = False
         start_pos = int(args.AnchorStart) - len(anchor_dict["index_key"])
+        unknown_seq_start = start_pos + len(args.AnchorSeq)
+
         while not anchor_found:
             mismatch_index = Sequence_Magic.match_maker(
                 args.AnchorSeq, fastq_read.seq[start_pos:][:len(args.AnchorSeq)])
@@ -1091,7 +1025,6 @@ class SyntheticLethal:
 
             elif mismatch_index <= int(args.AnchorMismatch):
                 anchor_found = True
-                unknown_seq_start = start_pos + len(args.AnchorSeq)
                 anchor_dict["anchor_count"] += 1
                 anchor_dict["total_target_pos_list"].append(unknown_seq_start)
 

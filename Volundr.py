@@ -1,4 +1,5 @@
 #!usr/bin/env python3
+# coding=utf-8
 """
 Volundr.py v 1.0.0
     Entry point for the Volundr bioinformatics package.
@@ -19,7 +20,7 @@ import Valkyries.Version_Dependencies as VersionDependencies
 import Valkyries.Tool_Box as Tool_Box
 
 __author__ = 'Dennis A. Simpson'
-__version__ = '1.0.2'
+__version__ = '2.x.x'
 __package__ = 'Völundr'
 
 
@@ -56,7 +57,7 @@ def main(command_line_args=None):
 
     synthetic_lethal = Synthetic_Lethal.SyntheticLethal(log, args)
 
-    if args.Target_Search:
+    if args.TargetSearch:
         synthetic_lethal.fastq_analysis()
     elif args.Statistics:
         synthetic_lethal.statistics()
@@ -81,17 +82,17 @@ def error_checking(args):
 
     if not os.path.isfile(args.Target_File):
         print("\033[1;31mERROR:\n\t--Target_File: {} Not Found.  Check Options File."
-              .format(args.Working_Folder))
+              .format(args.Target_File))
         raise SystemExit(1)
 
     if not os.path.isfile(args.Master_Index_File):
         print("\033[1;31mERROR:\n\t--Master_Index_File: {} Not Found.  Check Options File."
-              .format(args.Working_Folder))
+              .format(args.Master_Index_File))
         raise SystemExit(1)
 
-    if not os.path.isfile(args.Index_File):
+    if not os.path.isfile(args.SampleManifest):
         print("\033[1;31mERROR:\n\t--Index_File: {} Not Found.  Check Options File."
-              .format(args.Working_Folder))
+              .format(args.Index_File))
         raise SystemExit(1)
 
 
@@ -103,14 +104,22 @@ def string_to_boolean(options_parser):
     """
     args = options_parser.parse_args()
 
-    options_parser.set_defaults(Target_Search=bool(strtobool(args.Target_Search)))
+    options_parser.set_defaults(TargetSearch=bool(strtobool(args.TargetSearch)))
     options_parser.set_defaults(Statistics=bool(strtobool(args.Statistics)))
 
     if not getattr(args, "Index_Mismatch", False):
         options_parser.add_argument("--Index_Mismatch", dest="Index_Mismatch", default=0)
-        options_parser.add_argument("--Analyze_Unknowns", dest="Analyze_Unknowns", default="False")
+        options_parser.add_argument("--Analyze_Unknowns", dest="Analyze_Unknowns", default=False)
+        options_parser.set_defaults(Write_TDnorm_Log2_sgRNA_Control_File=
+                                    bool(strtobool(args.Write_TDnorm_Log2_sgRNA_Control_File)))
+        options_parser.set_defaults(Write_TDnorm_Log2_sgRNA_Sample_File=
+                                    bool(strtobool(args.Write_TDnorm_Log2_sgRNA_Sample_File)))
+        options_parser.set_defaults(Write_Log2_sgRNA_File=
+                                    bool(strtobool(args.Write_Log2_sgRNA_File)))
+        options_parser.set_defaults(Write_Permuted_Log2_Data_File=
+                                    bool(strtobool(args.Write_Permuted_Log2_Data_File)))
 
-    if args.Target_Search == "True":
+    if args.TargetSearch == "True":
         options_parser.set_defaults(Analyze_Unknowns=bool(strtobool(args.Analyze_Unknowns)))
         options_parser.set_defaults(RevComp=bool(strtobool(args.RevComp)))
         options_parser.set_defaults(Delete_Demultiplexed_FASTQ=bool(strtobool(args.Delete_Demultiplexed_FASTQ)))

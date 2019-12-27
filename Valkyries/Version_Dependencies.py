@@ -30,7 +30,7 @@ def python_check():
     Check Python version
     """
     python_max = '3.7.3'
-    python_min = '3.4.1'
+    python_min = '3.5.0'
     if StrictVersion(platform.python_version()) < python_min or StrictVersion(platform.python_version()) > python_max:
         raise SystemExit("\033[1;31mERROR:\033[m Python version must be > v{} and < v{}.  Current Python version is {}"
                          .format(python_min, python_max, platform.python_version()))

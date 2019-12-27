@@ -1,0 +1,56 @@
+sgRNA Targets excluded from analysis.
+File Generated 2019-12-22 18:20:39
+Library Control File: plDDCAS9
+1.25 Percentile gTCnorm Cutoff: 1.2e-05
+
+sgRNA Name	gTCnorm
+Atrip_3	5.015e-06
+Carm1_9	1.133e-05
+Cbx1_7	2.403e-06
+Cdk2_3	1.017e-06
+Chek1_10	5.921e-06
+Dut_3	2.119e-06
+E2f1_5	1.159e-05
+Ep300_6	6.606e-07
+Fanca_2	3.032e-06
+Gen1_2	0
+Gins1_8	1.024e-05
+H2afx_7	3.932e-06
+Hdac3_1	6.959e-06
+Kat2b_1	0
+Lig1_6	1.767e-06
+Mlh1_6	4.912e-06
+Morc4_8	0
+Mus81_9	0
+Nek1_5	0
+Nthl1_3	1.109e-05
+PMS1_1	1.188e-05
+Rad17_3	1.103e-05
+Rad51c_9	1.932e-06
+Rad54l_6	0
+Rbbp8_3	6.319e-07
+Rrm2b_4	1.16e-05
+Stag1_1	0
+Stag1_2	0
+Suv39h2_2	9.478e-06
+Terf2_3	8.599e-06
+Top2a_4	1.629e-06
+Trp53_7	6.278e-06
+Ube2n_6	2.398e-06
+Ubr5_2	0
+Usp11_8	6.601e-06
+Uvssa_1	2.32e-06
+Xrcc3_9	0
+Xrcc4_10	1.082e-05
+Mouse_0004	3.581e-06
+Mouse_0020	6.924e-06
+Mouse_0190	6.82e-06
+Mouse_0313	1.146e-05
+Mouse_0532	9.084e-06
+Mouse_0561	2.58e-06
+Mouse_0586	7.484e-06
+Mouse_0597	0
+Mouse_0602	0
+Mouse_0743	3.838e-06
+Mouse_0805	7.75e-06
+53BP1-intron	0
