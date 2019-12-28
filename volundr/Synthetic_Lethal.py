@@ -844,6 +844,27 @@ class SyntheticLethal:
         :param argvs:
         :return:
         """
+        def frequency_position():
+            # Total Anchors data
+            freq_pos_outstring = "Total_Anchors\tPosition\tCount\tFrequency"
+            freq_pos_outstring = \
+                SyntheticLethal.__frequency_outstring(freq_pos_outstring, anchor_dict["total_target_pos_list"],
+                                                      index_key_length, anchor_dict)
+            # Total Targets Data
+            freq_pos_outstring += "\nTargets_Found\tPosition\tCount\tFrequency"
+            freq_pos_outstring = \
+                SyntheticLethal.__frequency_outstring(freq_pos_outstring, target_found_pos_list, index_key_length,
+                                                      anchor_dict)
+            # No Target Data
+            freq_pos_outstring += "\nNo_Targets_Found\tPosition\tCount\tFrequency"
+            freq_pos_outstring = \
+                SyntheticLethal.__frequency_outstring(freq_pos_outstring, no_target_pos_list, index_key_length,
+                                                      anchor_dict)
+
+            target_position_freq_outfile = open("{0}{1}_{2}_Target_Position_Freq.txt"
+                                                .format(args.Working_Folder, args.Job_Name, index_name), "w")
+            target_position_freq_outfile.write(freq_pos_outstring)
+            target_position_freq_outfile.close()
 
         args, targets_dict, log, index_dict = argvs
         log.info("Begin Target Search in {}".format(ntpath.basename(fq_file)))
@@ -920,26 +941,9 @@ class SyntheticLethal:
 
         # Process frequency data and write output file.
         log.debug("Processing data for {}".format(ntpath.basename(fq_file)))
-        # Total Anchors data
-        freq_pos_outstring = "Total_Anchors\tPosition\tCount\tFrequency"
-        freq_pos_outstring = \
-            SyntheticLethal.__frequency_outstring(freq_pos_outstring, anchor_dict["total_target_pos_list"],
-                                                  index_key_length, anchor_dict)
-        # Total Targets Data
-        freq_pos_outstring += "\nTargets_Found\tPosition\tCount\tFrequency"
-        freq_pos_outstring = \
-            SyntheticLethal.__frequency_outstring(freq_pos_outstring, target_found_pos_list, index_key_length,
-                                                  anchor_dict)
-        # No Target Data
-        freq_pos_outstring += "\nNo_Targets_Found\tPosition\tCount\tFrequency"
-        freq_pos_outstring = \
-            SyntheticLethal.__frequency_outstring(freq_pos_outstring, no_target_pos_list, index_key_length,
-                                                  anchor_dict)
 
-        target_position_freq_outfile = open("{0}{1}_{2}_Target_Position_Freq.txt"
-                                            .format(args.Working_Folder, args.Job_Name, index_name), "w")
-        target_position_freq_outfile.write(freq_pos_outstring)
-        target_position_freq_outfile.close()
+        if args.Verbose == "DEBUG":
+            frequency_position()
 
         # Format target count data for output file and write data to file.
         for line in target_file:
