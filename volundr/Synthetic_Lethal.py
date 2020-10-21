@@ -24,12 +24,11 @@ from scipy.stats import gmean
 from scipy.stats import ks_2samp
 import natsort
 import pathos
-import Valkyries.FASTQ_Tools as FASTQ_Tools
-import Valkyries.Tool_Box as Tool_Box
-import Valkyries.Sequence_Magic as Sequence_Magic
+from Valkyries import FASTQ_Tools, Tool_Box, Sequence_Magic
+
 
 __author__ = 'Dennis A. Simpson'
-__version__ = '2.0.0'
+__version__ = '2.1.0'
 __package__ = 'Völundr'
 
 
@@ -597,7 +596,8 @@ class SyntheticLethal:
             # Index Name, Sample Name, Sample Replica
             param_string += "{}\t{}\t{}\t{}\t{}\t{}"\
                 .format(index_name, self.sample_data_dict[index_seq][5], self.sample_data_dict[index_seq][6],
-                        self.sample_data_dict[index_seq][1], self.sample_data_dict[index_seq][2], self.sample_data_dict[index_seq][3])
+                        self.sample_data_dict[index_seq][1], self.sample_data_dict[index_seq][2],
+                        self.sample_data_dict[index_seq][3])
 
             # Mismatched counts
             for i in range(len(self.sample_data_dict[index_seq][0])):
@@ -676,12 +676,15 @@ class SyntheticLethal:
             except ValueError:
                 target_seq = target[1]
 
+            if self.args.RevComp:
+                target_seq = Sequence_Magic.rcomp(target_seq)
+
             target_name = target[0]
             target_list.append((target_seq, target_name))
             self.targets[len(target_seq)].append(target_seq)
 
             if target_seq in self.target_dict:
-                self.log.error("The sgRNA target sequence in {0} is duplicated.  Correct the error in {1} and try "
+                self.log.error("The sgRNA target sequence in {} is duplicated.  Correct the error in {} and try "
                                "again.".format(target, self.args.Target_File))
                 raise SystemExit(1)
 
@@ -696,6 +699,8 @@ class SyntheticLethal:
         off_target_count = 0
         # Do a fine scale quality analysis of targets looking for similar sequences and off target guides.
         for target_name in self.target_dict:
+            Tool_Box.debug_messenger("Skipping Off-Target Search")
+            break
             for target in target_list:
                 mismatch_index = Sequence_Magic.match_maker(target[0], self.target_dict[target_name])
                 if 0 < mismatch_index <= 3:
@@ -846,17 +851,17 @@ class SyntheticLethal:
         """
         def frequency_position():
             # Total Anchors data
-            freq_pos_outstring = "Total_Anchors\tPosition\tCount\tFrequency"
+            freq_pos_outstring = "Position\tTotal_Anchors\tFrequency"
             freq_pos_outstring = \
                 SyntheticLethal.__frequency_outstring(freq_pos_outstring, anchor_dict["total_target_pos_list"],
                                                       index_key_length, anchor_dict)
             # Total Targets Data
-            freq_pos_outstring += "\nTargets_Found\tPosition\tCount\tFrequency"
+            freq_pos_outstring += "\nPosition\tTargets_Found\tFrequency"
             freq_pos_outstring = \
                 SyntheticLethal.__frequency_outstring(freq_pos_outstring, target_found_pos_list, index_key_length,
                                                       anchor_dict)
             # No Target Data
-            freq_pos_outstring += "\nNo_Targets_Found\tPosition\tCount\tFrequency"
+            freq_pos_outstring += "\nPosition\tNo_Targets_Found\tFrequency"
             freq_pos_outstring = \
                 SyntheticLethal.__frequency_outstring(freq_pos_outstring, no_target_pos_list, index_key_length,
                                                       anchor_dict)
@@ -917,20 +922,25 @@ class SyntheticLethal:
 
             fastq_read_count += 1
             # If the read length is too short skip it and go onto the next one.
-            if len(fastq_read.seq) <= int(args.Min_Length):
+            if len(fastq_read.seq) <= int(args.Min_Length) or fastq_read.seq.count("T") > len(fastq_read.seq)/2:
                 continue
 
             # Find the first position of the sgRNA
-            unknown_seq_start, anchor_dict = SyntheticLethal.__anchor_search(args, fastq_read, anchor_dict)
+            anchor_found, unknown_seq_start, anchor_dict = \
+                SyntheticLethal.__anchor_search(args, fastq_read, anchor_dict)
 
+            target_seq = False
             # Compare the sgRNA sequence to the targets.
-            target_seq, mismatch_index = SyntheticLethal.__target_match(targets_dict, fastq_read,
-                                                                        unknown_seq_start, args)
+            if anchor_found:
+                target_seq, mismatch_index = \
+                    SyntheticLethal.__target_match(targets_dict, fastq_read, unknown_seq_start, args)
+
             # Count our targets or no targets.
             if target_seq:
                 target_count_dict[target_seq][mismatch_index] += 1
                 target_found_pos_list.append(unknown_seq_start)
                 target_count += 1
+
             else:
                 no_target_pos_list.append(unknown_seq_start)
 
@@ -949,12 +959,17 @@ class SyntheticLethal:
         for line in target_file:
             target_name = line[0]
             if args.Target_Length == 'Variable':
-                target_key = line[1]
+                sgrna = line[1]
             else:
-                target_key = line[1][int(args.Target_Start):][:int(args.Target_Length)]
-            target_data_outstring += "\n{0}\t{1}".format(target_name, target_key)
+                sgrna = line[1][int(args.Target_Start):][:int(args.Target_Length)]
+
+            target_key = sgrna
+            if args.RevComp:
+                target_key = Sequence_Magic.rcomp(sgrna)
+
+            target_data_outstring += "\n{0}\t{1}".format(target_name, sgrna)
             for i in range(int(args.Target_Mismatch)+1):
-                target_data_outstring += "\t{0}".format(target_count_dict[target_key][i])
+                target_data_outstring += "\t{}".format(target_count_dict[target_key][i])
 
         target_data_file_name = "{0}{1}_{2}_target_counts.txt".format(args.Working_Folder, args.Job_Name, index_name)
         target_data_out = open(target_data_file_name, "w")
@@ -983,10 +998,12 @@ class SyntheticLethal:
         # Go through targets based on size.
         for target_length in targets_dict:
 
-            if args.RevComp:
-                unknown_seq = Sequence_Magic.rcomp(fastq_read.seq[unknown_seq_start:][:target_length])
-            else:
-                unknown_seq = fastq_read.seq[unknown_seq_start:][:target_length]
+            # if args.RevComp:
+            #     unknown_seq = Sequence_Magic.rcomp(fastq_read.seq[unknown_seq_start:][:target_length])
+            # else:
+            #     unknown_seq = fastq_read.seq[unknown_seq_start:][:target_length]
+
+            unknown_seq = fastq_read.seq[unknown_seq_start:][:target_length]
 
             for target in targets_dict[target_length]:
                 mismatch_index = Sequence_Magic.match_maker(target, unknown_seq)
@@ -1014,10 +1031,11 @@ class SyntheticLethal:
         :return:
         """
         anchor_found = False
-        start_pos = int(args.AnchorStart) - len(anchor_dict["index_key"])
-        unknown_seq_start = start_pos + len(args.AnchorSeq)
+        # start_pos = int(args.AnchorStart) - len(anchor_dict["index_key"])
+        start_pos = int(args.AnchorStart)
 
         while not anchor_found:
+            unknown_seq_start = start_pos + len(args.AnchorSeq)
             mismatch_index = Sequence_Magic.match_maker(
                 args.AnchorSeq, fastq_read.seq[start_pos:][:len(args.AnchorSeq)])
 
@@ -1033,12 +1051,12 @@ class SyntheticLethal:
                 anchor_dict["total_target_pos_list"].append(unknown_seq_start)
 
             start_pos += 1
-        return unknown_seq_start, anchor_dict
+        return anchor_found, unknown_seq_start, anchor_dict
 
     @staticmethod
     def __frequency_outstring(freq_pos_outstring, data_list, index_key_length, anchor_dict):
         """
-        This processess the data for the frequency position data file.
+        This processes the data for the frequency position data file.
         :param freq_pos_outstring:
         :param data_list:
         :param index_key_length:
@@ -1046,7 +1064,8 @@ class SyntheticLethal:
         :return:
         """
         total_target_pos_counter = collections.Counter(data_list)
-        for k in total_target_pos_counter.items():
+
+        for k in natsort.natsorted(total_target_pos_counter.items()):
             freq_pos_outstring += \
                 "\n{0}\t{1}\t{2}".format(k[0]+index_key_length, k[1], round((k[1]/anchor_dict["anchor_count"]), 4))
         return freq_pos_outstring

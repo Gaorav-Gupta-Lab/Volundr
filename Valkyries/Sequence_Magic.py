@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Sequence_Magic.py v0.2.0
     Jan. 12, 2017
@@ -21,7 +20,7 @@ from Levenshtein import distance
 from Valkyries.Tool_Box import deprecated
 
 __author__ = 'Dennis A. Simpson'
-__version__ = '0.2.1'
+__version__ = '0.3.0'
 
 
 @deprecated("Use function from Tool_Box")
@@ -98,10 +97,8 @@ def rcomp(seq):
         after += after.lower()
         ttable = str.maketrans(before, after)
         comp_seq = rseq.translate(ttable)
-
         return comp_seq
-
-    _complement(''.join(reversed(seq)))
+    return _complement(''.join(reversed(seq)))
 
 
 def match_maker(query, unknown):

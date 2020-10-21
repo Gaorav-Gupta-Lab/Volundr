@@ -1,13 +1,13 @@
 #!usr/bin/env python3
-# coding=utf-8
+
 """
-Volundr.py v 1.0.0
+Volundr.py v 2.0.0
     Entry point for the Volundr bioinformatics package.
 
 @author: Dennis A. Simpson
          University of North Carolina at Chapel Hill
          Chapel Hill, NC  27599
-@copyright: 2019
+@copyright: 2020
 """
 import os
 import sys
@@ -20,7 +20,7 @@ import Valkyries.Version_Dependencies as VersionDependencies
 import Valkyries.Tool_Box as Tool_Box
 
 __author__ = 'Dennis A. Simpson'
-__version__ = '2.x.x'
+__version__ = '2.1.0'
 __package__ = 'Völundr'
 
 
@@ -91,8 +91,8 @@ def error_checking(args):
         raise SystemExit(1)
 
     if not os.path.isfile(args.SampleManifest):
-        print("\033[1;31mERROR:\n\t--Index_File: {} Not Found.  Check Options File."
-              .format(args.Index_File))
+        print("\033[1;31mERROR:\n\t--Sample Manifest: {} Not Found.  Check Options File."
+              .format(args.SampleManifest))
         raise SystemExit(1)
 
 
