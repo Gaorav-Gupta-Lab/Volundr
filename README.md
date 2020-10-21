@@ -20,7 +20,7 @@ Minimum System Requirements:
     ~5x the size of the compressed FASTQ file for disk space.
 
 Required Python Libraries:
-    Python ≥v3.5
+    Python ≥v3.6
     numpy
     scipy
     python-levenshtein
