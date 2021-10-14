@@ -623,8 +623,13 @@ class SyntheticLethal:
         fastq_out_list = []
         master_index_dict = {}
         fastq_file_dict = collections.defaultdict(object)
+        if self.args.TargetSearch:
+            index_mismatch = self.args.Index_Mismatch
+        else:
+            index_mismatch = 1
+
         sample_data_dict = \
-            {"Unknown": [[0] * (int(self.args.Index_Mismatch) + 1), 0, 0, 0, "Unknown", "Unknown", "Unknown"]}
+            {"Unknown": [[0] * (index_mismatch + 1), 0, 0, 0, "Unknown", "Unknown", "Unknown"]}
 
         with open(self.args.Master_Index_File) as f:
             for l in f:
@@ -643,7 +648,7 @@ class SyntheticLethal:
             # for each sample name append a list of all index ID's
             self.sample_mapping_dict[sample[1]].append(sample[0])
             sample_data_dict[index_name] = \
-                [[0]*(int(self.args.Index_Mismatch)+1), 0, 0, 0, sample[0], sample[1], sample[2]]
+                [[0]*(index_mismatch+1), 0, 0, 0, sample[0], sample[1], sample[2]]
 
             if self.args.TargetSearch:
                 fastq_file_dict[index_name] = \
@@ -656,6 +661,10 @@ class SyntheticLethal:
         # This is for no index found.
         self.SampleManifest.append(("Unknown", "Unknown", "Unknown"))
 
+        # If doing Statistics there is no need to run the sgRNA check.
+        if self.args.Statistics:
+            return sample_data_dict, fastq_file_dict, fastq_out_list, master_index_dict
+
         if self.args.Analyze_Unknowns:
             master_index_dict["Unknown"] = "Unknown"
             fastq_file_dict["Unknown"] = \
@@ -663,10 +672,6 @@ class SyntheticLethal:
                                    .format(self.args.Working_Folder, self.args.Job_Name))
 
             fastq_out_list.append("{0}{1}_Unknown.fastq".format(self.args.Working_Folder, self.args.Job_Name))
-
-        # If doing Statistics there is no need to run the sgRNA check.
-        if self.args.Statistics:
-            return sample_data_dict, fastq_file_dict, fastq_out_list, master_index_dict
 
         # Fill target list and dictionary.  Do initial quality check on target file for duplicates.
         target_list = []
