@@ -1,7 +1,6 @@
 #!/bin/bash
 #Parameter file to run Völundr Synthetic Lethal module Target_Search
-#File generated 10-Oct-2021
-#This is a BETA for v3 program.
+#File generated 2019-12-12
 
 # SLURM Commands
 #SBATCH --nodes=1
@@ -13,25 +12,9 @@
 python3 /full/path/to/Volundr.py --options_file /full/path/to/run_Volundr_Target_Search.sh
 exit
 
-
-# Run Information
---Verbose	INFO
---Job_Name	
---Spawn	
---BatchSize	10	# How many reads to grab from FASTQ at once.
---Species	
---Platform	Illumina
---Analyze_Unknowns	False
---Delete_Demultiplexed_FASTQ	True
---Compress	False
-
-
-# Module Selection
 --Target_Search	True
 --Statistics	False
 
-
-# File Locations
 --Working_Folder	/full/path/to/working/folder/
 --FASTQ1	/full/path/to/fastq_file.fq.gz
 --Target_File	/full/path/to/target_file.bed
@@ -39,7 +22,14 @@ exit
 --SampleManifest	/full/path/to/SampleManifest.txt
 
 
-# Library Specific Information
+--Verbose	INFO
+--Job_Name	ASW1
+--Spawn	
+--Species	
+--Platform	Illumina
+--Analyze_Unknowns	False
+--Delete_Demultiplexed_FASTQ	True
+--Compress	False
 --RevComp	False
 --Target_Mismatch	1
 --Min_Length	120
