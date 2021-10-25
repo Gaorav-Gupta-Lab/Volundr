@@ -9,6 +9,7 @@ Volundr.py v 3.0.0
          Chapel Hill, NC  27599
 @copyright: 2021
 """
+import ntpath
 import os
 import sys
 import argparse
@@ -33,7 +34,6 @@ __package__ = 'Völundr'
 def main():
     """
 
-    :param command_line_args:
     """
     VersionDependencies.python_check()
 
@@ -43,60 +43,34 @@ def main():
     parser.add_argument('--options_file', action='store', dest='options_file', required=True,
                         help='File containing program parameters.')
 
-    # Convert universal variables intended as boolean from string to boolean.
-    # args, options_parser = string_to_boolean(Tool_Box.options_file(parser))
-
-    # Check file names and paths for errors
+    # Convert strings to int, float, boolean, check file names and paths for errors
     args, log = error_checking(parser)
-
-    # log = Tool_Box.Logger(args)
-    # Tool_Box.log_environment_info(log, args, command_line_args)
-
     start_time = time.time()
-    module_name = "Synthetic_Lethal"
 
-    log.info("{0} v{1}; Module: Synthetic Lethal Analysis v{2} Beginning"
-             .format(__package__, __version__, Synthetic_Lethal.__version__))
-
+    # Initialize program
     synthetic_lethal = Synthetic_Lethal.SyntheticLethal(log, args)
 
     if args.TargetSearch:
+        module_name = "Target Search"
+        log.info("{} v{}; Module: {} v{} Beginning"
+                 .format(__package__, __version__, module_name, Synthetic_Lethal.__version__))
+
         synthetic_lethal.fastq_analysis()
+
     elif args.Statistics:
+        module_name = "Statistical Analysis"
+        log.info("{} v{}; Module: {} v{} Beginning"
+                 .format(__package__, __version__, module_name, Synthetic_Lethal.__version__))
         synthetic_lethal.statistics()
+
     else:
+        module_name = "No module selected"
         log.error('No module selected to run.')
 
     warning = "\033[1;31m **See warnings above**\033[m" if log.warning_occurred else ''
     elapsed_time = int(time.time() - start_time)
     log.info("****Völundr {0} complete ({1} seconds, {2} Mb peak memory).****\n{3}"
              .format(module_name, elapsed_time, Tool_Box.peak_memory(), warning))
-
-
-def error_checking_old(args):
-    """
-    Make sure all paths and files exist.
-    :param args:
-    """
-    if not os.path.exists(args.Working_Folder):
-        print("\033[1;31mERROR:\n\t--Working_Folder: {} Not Found.  Check Options File."
-              .format(args.Working_Folder))
-        raise SystemExit(1)
-
-    if not os.path.isfile(args.Target_File):
-        print("\033[1;31mERROR:\n\t--Target_File: {} Not Found.  Check Options File."
-              .format(args.Target_File))
-        raise SystemExit(1)
-
-    if not os.path.isfile(args.Master_Index_File):
-        print("\033[1;31mERROR:\n\t--Master_Index_File: {} Not Found.  Check Options File."
-              .format(args.Master_Index_File))
-        raise SystemExit(1)
-
-    if not os.path.isfile(args.SampleManifest):
-        print("\033[1;31mERROR:\n\t--Sample Manifest: {} Not Found.  Check Options File."
-              .format(args.SampleManifest))
-        raise SystemExit(1)
 
 
 def error_checking(parser):
@@ -126,10 +100,12 @@ def error_checking(parser):
             options_parser.set_defaults(RevComp=bool(strtobool(initial_args.RevComp)))
             options_parser.set_defaults(BatchSize=int(initial_args.BatchSize))
             options_parser.set_defaults(Target_Mismatch=int(initial_args.Target_Mismatch))
-            options_parser.set_defaults(Min_Length=int(initial_args.Min_Length))
+            # options_parser.set_defaults(Min_Length=int(initial_args.Min_Length))
+            options_parser.set_defaults(MinimumReadLength=int(initial_args.MinimumReadLength))
+            options_parser.set_defaults(N_Limit=10)
             options_parser.set_defaults(Target_Length=int(initial_args.Target_Length))
             options_parser.set_defaults(Target_Start=int(initial_args.Target_Start))
-            options_parser.set_defaults(Index_Mismatch=int(initial_args.Index_Mismatch))
+            # options_parser.set_defaults(Index_Mismatch=int(initial_args.Index_Mismatch))
             options_parser.set_defaults(Spawn=int(initial_args.Spawn))
             options_parser.set_defaults(Target_Padding=int(initial_args.Target_Padding))
             options_parser.set_defaults(Expected_Position=int(initial_args.Expected_Position))
@@ -162,7 +138,7 @@ def error_checking(parser):
     log = Tool_Box.Logger(args)
     Tool_Box.log_environment_info(log, args, sys.argv)
 
-    if not pathlib.Path(args.Working_Folder).exists():
+    if not pathlib.Path(args.WorkingFolder).exists():
         print("\033[1;31mERROR:\n\tWorking Folder Path: {} Not Found.  Check Parameter File."
               .format(args.WorkingFolder))
         raise SystemExit(1)
@@ -207,40 +183,6 @@ def error_checking(parser):
             raise SystemExit(1)
 
     return args, log
-
-
-def string_to_boolean_old(options_parser):
-    """
-    Converts strings to boolean.  Done to keep the eval() function out of the code.
-    :param options_parser:
-    :return:
-    """
-    args = options_parser.parse_args()
-
-    options_parser.set_defaults(TargetSearch=bool(strtobool(args.TargetSearch)))
-    options_parser.set_defaults(Statistics=bool(strtobool(args.Statistics)))
-
-    if not getattr(args, "Index_Mismatch", False):
-        options_parser.add_argument("--Index_Mismatch", dest="Index_Mismatch", default=0)
-        options_parser.add_argument("--Analyze_Unknowns", dest="Analyze_Unknowns", default=False)
-        options_parser.set_defaults(Write_TDnorm_Log2_sgRNA_Control_File=
-                                    bool(strtobool(args.Write_TDnorm_Log2_sgRNA_Control_File)))
-        options_parser.set_defaults(Write_TDnorm_Log2_sgRNA_Sample_File=
-                                    bool(strtobool(args.Write_TDnorm_Log2_sgRNA_Sample_File)))
-        options_parser.set_defaults(Write_Log2_sgRNA_File=
-                                    bool(strtobool(args.Write_Log2_sgRNA_File)))
-        options_parser.set_defaults(Write_Permuted_Log2_Data_File=
-                                    bool(strtobool(args.Write_Permuted_Log2_Data_File)))
-
-    if args.TargetSearch == "True":
-        options_parser.set_defaults(Analyze_Unknowns=bool(strtobool(args.Analyze_Unknowns)))
-        options_parser.set_defaults(RevComp=bool(strtobool(args.RevComp)))
-        options_parser.set_defaults(Delete_Demultiplexed_FASTQ=bool(strtobool(args.Delete_Demultiplexed_FASTQ)))
-        options_parser.set_defaults(Compress=bool(strtobool(args.Compress)))
-
-    args = options_parser.parse_args()
-
-    return args, options_parser
 
 
 if __name__ == '__main__':
