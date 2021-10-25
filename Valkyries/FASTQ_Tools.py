@@ -129,9 +129,9 @@ class FastqSplitter:
                 if temp_file2:
                     temp_file2.close()
 
-                file1 = "{0}{1}_R1_tmp_{2}.fastq.gz".format(self.args.Working_Folder, self.args.Job_Name, i)
-                file2 = "{0}{1}_R2_tmp_{2}.fastq.gz".format(self.args.Working_Folder, self.args.Job_Name, i)
-                bam_file_list.append("{0}{1}_R1_tmp_{2}.bam".format(self.args.Working_Folder, self.args.Job_Name, i))
+                file1 = "{0}{1}_R1_tmp_{2}.fastq.gz".format(self.args.WorkingFolder, self.args.Job_Name, i)
+                file2 = "{0}{1}_R2_tmp_{2}.fastq.gz".format(self.args.WorkingFolder, self.args.Job_Name, i)
+                bam_file_list.append("{0}{1}_R1_tmp_{2}.bam".format(self.args.WorkingFolder, self.args.Job_Name, i))
                 fastq_file_list.append((file1, file2))
                 temp_file1 = Writer(self.log, file1)
                 temp_file2 = Writer(self.log, file2)
@@ -192,8 +192,8 @@ class FastqSplitter:
 
         self.log.info("Begin writing temporary FASTQ files.")
         current_read_count = 0
-        file1 = "{0}{1}_R1_processed.fastq.gz".format(self.args.Working_Folder, self.args.Job_Name)
-        file2 = "{0}{1}_R2_processed.fastq.gz".format(self.args.Working_Folder, self.args.Job_Name)
+        file1 = "{0}{1}_R1_processed.fastq.gz".format(self.args.WorkingFolder, self.args.Job_Name)
+        file2 = "{0}{1}_R2_processed.fastq.gz".format(self.args.WorkingFolder, self.args.Job_Name)
         temp_file1 = Writer(self.log, file1)
         temp_file2 = Writer(self.log, file2)
         self.log.info("Writing {0} and {1}".format(file1, file2))
@@ -316,7 +316,7 @@ class FastqProcessing:
         """
         self.log.info("Begin building dataframes")
 
-        with open(self.args.MasterIndexFile) as f:
+        with open(self.args.Master_Index_File) as f:
             for l in f:
                 if "#" in l or not l:
                     continue
@@ -376,8 +376,7 @@ class FastqProcessing:
 
                 # Get a list of the temporary FASTQ file names generated.
                 outfile_list_dict[sample_index].append(
-                    ["{}{}_{}_R1.fastq.gz".format(self.args.WorkingFolder, i, sample_index),
-                     "{}{}_{}_R2.fastq.gz".format(self.args.WorkingFolder, i, sample_index)])
+                    ["{}{}_{}_R1.fastq.gz".format(self.args.WorkingFolder, i, sample_index)])
 
                 # Initialize FASTQ file objects
                 # tmp1 = gzip.open("{}{}_{}_R1.fastq.gz".format(self.args.WorkingFolder, i, sample_index), "wb")
@@ -400,7 +399,7 @@ class FastqProcessing:
 
         return
 
-    def file_writer(self, worker_id, fq1_batch, tmp_file_list):
+    def file_writer(self, worker_id, fq1_batch):
         """
         Called by multiprocessor in MainEntry.  Process FASTQ file(s) and write temp version(s).
         :param tmp_file_list:
@@ -409,9 +408,9 @@ class FastqProcessing:
         :return:
         """
 
-        self.output_process(worker_id, tmp_file_list, FileWriter.file_writer(self, fq1_batch))
+        self.output_process(worker_id, FileWriter.file_writer(self, fq1_batch))
 
-    def output_process(self, worker_id, file_list, temp_data_dict):
+    def output_process(self, worker_id, temp_data_dict):
         """
         Write data to the appropriate temporary compressed file.
         :param file_list:
@@ -419,36 +418,24 @@ class FastqProcessing:
         :param temp_data_dict:
         """
 
-        tmp_umi_file = open("{}{}_tmp_umi.txt".format(self.args.WorkingFolder, worker_id), "a")
-        umi_outstring = ""
-        fq1 = file_list[0]
-        fq2 = file_list[1]
-
-        read_count = 0
-        filter_count = 0
-        fq1_outstring = ""
-        fq2_outstring = ""
         for sample_index in temp_data_dict:
-            for r1, r2 in zip(temp_data_dict[sample_index]["R1"], temp_data_dict[sample_index]["R2"]):
 
-                fq1_outstring += "{}".format(r1)
-                fq2_outstring += "{}".format(r2)
+            tmp_count_file = open("{}{}_{}_mismatch.tmp".format(self.args.WorkingFolder, worker_id, sample_index), "a")
+            tmp_count_file.write("{}\t{}\t{}\n"
+                                 .format(temp_data_dict[sample_index]["QC"][0], temp_data_dict[sample_index]["QC"][1],
+                                         temp_data_dict[sample_index]["QC"][2]))
+            tmp_count_file.close()
 
-            for umi, umi_count in temp_data_dict[sample_index].items():
-                if umi is not "R1" and umi is not "R2":
-                    read_count += umi_count[0]
-                    filter_count += umi_count[1]
-                    umi_outstring += "{}\t{}\t{}\t{}\n".format(sample_index, umi, umi_count[0], umi_count[1])
-
-        fq1.write(fq1_outstring)
-        fq2.write(fq2_outstring)
+            outstring = ""
+            for block in temp_data_dict[sample_index]["R1"]:
+                outstring += "{}".format(block)
+            outfile = open("{}{}_{}.tmp".format(self.args.WorkingFolder, worker_id, sample_index), "a")
+            outfile.write(outstring)
+            outfile.close()
 
         # Not clearing this results in duplications in the output.  Strange since the dictionary is rebuilt everytime
         # within the job.
         temp_data_dict.clear()
-
-        tmp_umi_file.write(umi_outstring)
-        tmp_umi_file.close()
 
 
 class FastqQuality:
@@ -538,7 +525,7 @@ class FastqQuality:
                 anchor_outstring += "\n{0}\t{1}\t{2}\t{3}\t{4}".format(index[1], index[0], total_reads, key, tmp_string)
 
         # Initialize the output file.
-        outfile = "{0}{1}_FASTQ_QualityAssessment.txt".format(self.args.Working_Folder, self.args.Job_Name)
+        outfile = "{0}{1}_FASTQ_QualityAssessment.txt".format(self.args.WorkingFolder, self.args.Job_Name)
         quality_outfile = open(outfile, "w")
         quality_outfile.write(anchor_outstring)
         quality_outfile.close()

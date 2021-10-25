@@ -26,6 +26,7 @@ import cProfile
 import sys
 import getpass
 import socket
+import gzip
 import logging
 from datetime import datetime
 from contextlib import suppress
@@ -132,6 +133,50 @@ def compress_files(file):
         print("\t-->{0} Compressed".format(file))
     else:
         print("{0} not found.".format(file))
+
+
+def file_merge(sample_index, args, log, sample_data_dict, worker_list):
+    indexed_count = 0
+    for worker_id in worker_list:
+        try:
+            r1_tmp_file = open("{}{}_{}.tmp".format(args.WorkingFolder, worker_id, sample_index), "r")
+        except FileNotFoundError:
+            continue
+        outstring = ""
+
+        count_tmp_file = \
+            list(csv.reader(open("{}{}_{}_mismatch.tmp"
+                                 .format(args.WorkingFolder, worker_id, sample_index)), delimiter='\t'))
+
+        # Total reads for index 0 mismatch, 1 mismatch, filtered reads
+        for line in count_tmp_file:
+            sample_data_dict[sample_index][0][0] += int(line[0])
+            sample_data_dict[sample_index][0][1] += int(line[1])
+            sample_data_dict[sample_index][0][2] += int(line[2])
+
+        log.debug("Reading Temp FASTQ {}{}_{}.tmp".format(args.WorkingFolder, worker_id, sample_index))
+
+        line_count = 0
+        for line in r1_tmp_file:
+            outstring += line
+            line_count += 1
+
+        indexed_count += int(line_count * 0.25)
+
+        r1_out = \
+            gzip.open("{}{}_{}.fq.gz".format(args.WorkingFolder, args.Job_Name, sample_index), "a")
+        r1_out.write(outstring.encode())
+        r1_out.close()
+
+        # Close the open temp files and delete them
+        r1_tmp_file.close()
+        delete(["{}{}_{}.tmp".format(args.WorkingFolder, worker_id, sample_index),
+                "{}{}_{}_mismatch.tmp".format(args.WorkingFolder, worker_id, sample_index)])
+
+    # Write number of indexed counts to temp file
+    indexed_count_file = open("{}{}_counts.tmp".format(args.WorkingFolder, sample_index), "w")
+    indexed_count_file.write("{}".format(indexed_count))
+    indexed_count_file.close()
 
 
 def chromosomes(species, log, include_chrY):
@@ -248,7 +293,7 @@ class Logger:
     def __init__(self, args, console_stream=None):
         self._verbose = args.Verbose
         log_file = args.Job_Name
-        self._log_filename = "{0}{1}.log".format(args.Working_Folder, log_file)
+        self._log_filename = "{0}{1}.log".format(args.WorkingFolder, log_file)
 
         try:
             log = open(self._log_filename, "w")
@@ -344,7 +389,7 @@ def log_environment_info(log, args, command_line_args):
     """
     log.info("original_command_line|{}".format(' '.join(command_line_args)))
     log.info('command_options|{}'.format(args))
-    log.info('Working_Folder|{}'.format(args.Working_Folder))
+    log.info('WorkingFolder|{}'.format(args.WorkingFolder))
     log.info('platform_uname|{}'.format(platform.uname()))
     log.info('platform_python_version|{}'.format(platform.python_version()))
 
