@@ -1031,6 +1031,18 @@ static PyObject *__Pyx_GetItemInt_Generic(PyObject *o, PyObject* j);
 static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Fast(PyObject *o, Py_ssize_t i,
                                                      int is_list, int wraparound, int boundscheck);
 
+/* RaiseTooManyValuesToUnpack.proto */
+static CYTHON_INLINE void __Pyx_RaiseTooManyValuesError(Py_ssize_t expected);
+
+/* RaiseNeedMoreValuesToUnpack.proto */
+static CYTHON_INLINE void __Pyx_RaiseNeedMoreValuesError(Py_ssize_t index);
+
+/* IterFinish.proto */
+static CYTHON_INLINE int __Pyx_IterFinish(void);
+
+/* UnpackItemEndCheck.proto */
+static int __Pyx_IternextUnpackEndCheck(PyObject *retval, Py_ssize_t expected);
+
 /* ObjectGetItem.proto */
 #if CYTHON_USE_TYPE_SLOTS
 static CYTHON_INLINE PyObject *__Pyx_PyObject_GetItem(PyObject *obj, PyObject* key);
@@ -1046,12 +1058,6 @@ static CYTHON_INLINE int __Pyx_PyBytes_Equals(PyObject* s1, PyObject* s2, int eq
 
 /* UnicodeEquals.proto */
 static CYTHON_INLINE int __Pyx_PyUnicode_Equals(PyObject* s1, PyObject* s2, int equals);
-
-/* PySequenceContains.proto */
-static CYTHON_INLINE int __Pyx_PySequence_ContainsTF(PyObject* item, PyObject* seq, int eq) {
-    int result = PySequence_Contains(seq, item);
-    return unlikely(result < 0) ? result : (result == (eq == Py_EQ));
-}
 
 /* ListAppend.proto */
 #if CYTHON_USE_PYLIST_INTERNALS && CYTHON_ASSUME_SAFE_MACROS
@@ -1090,6 +1096,20 @@ static PyObject *__Pyx_PyDict_GetItem(PyObject *d, PyObject* key);
 #define __Pyx_PyObject_Dict_GetItem(obj, name)  PyObject_GetItem(obj, name)
 #endif
 
+/* PySequenceContains.proto */
+static CYTHON_INLINE int __Pyx_PySequence_ContainsTF(PyObject* item, PyObject* seq, int eq) {
+    int result = PySequence_Contains(seq, item);
+    return unlikely(result < 0) ? result : (result == (eq == Py_EQ));
+}
+
+/* PyIntBinop.proto */
+#if !CYTHON_COMPILING_IN_PYPY
+static PyObject* __Pyx_PyInt_AddObjC(PyObject *op1, PyObject *op2, long intval, int inplace, int zerodivision_check);
+#else
+#define __Pyx_PyInt_AddObjC(op1, op2, intval, inplace, zerodivision_check)\
+    (inplace ? PyNumber_InPlaceAdd(op1, op2) : PyNumber_Add(op1, op2))
+#endif
+
 /* RaiseArgTupleInvalid.proto */
 static void __Pyx_RaiseArgtupleInvalid(const char* func_name, int exact,
     Py_ssize_t num_min, Py_ssize_t num_max, Py_ssize_t num_found);
@@ -1102,25 +1122,11 @@ static int __Pyx_ParseOptionalKeywords(PyObject *kwds, PyObject **argnames[],\
     PyObject *kwds2, PyObject *values[], Py_ssize_t num_pos_args,\
     const char* function_name);
 
-/* ArgTypeTest.proto */
-#define __Pyx_ArgTypeTest(obj, type, none_allowed, name, exact)\
-    ((likely((Py_TYPE(obj) == type) | (none_allowed && (obj == Py_None)))) ? 1 :\
-        __Pyx__ArgTypeTest(obj, type, name, exact))
-static int __Pyx__ArgTypeTest(PyObject *obj, PyTypeObject *type, const char *name, int exact);
-
 /* SliceObject.proto */
 static CYTHON_INLINE PyObject* __Pyx_PyObject_GetSlice(
         PyObject* obj, Py_ssize_t cstart, Py_ssize_t cstop,
         PyObject** py_start, PyObject** py_stop, PyObject** py_slice,
         int has_cstart, int has_cstop, int wraparound);
-
-/* PyIntBinop.proto */
-#if !CYTHON_COMPILING_IN_PYPY
-static PyObject* __Pyx_PyInt_AddObjC(PyObject *op1, PyObject *op2, long intval, int inplace, int zerodivision_check);
-#else
-#define __Pyx_PyInt_AddObjC(op1, op2, intval, inplace, zerodivision_check)\
-    (inplace ? PyNumber_InPlaceAdd(op1, op2) : PyNumber_Add(op1, op2))
-#endif
 
 /* PyIntCompare.proto */
 static CYTHON_INLINE PyObject* __Pyx_PyInt_EqObjC(PyObject *op1, PyObject *op2, long intval, long inplace);
@@ -1303,7 +1309,6 @@ static int __Pyx_InitStrings(__Pyx_StringTabEntry *t);
 
 /* Module declarations from 'FileWriter' */
 static PyObject *__pyx_v_10FileWriter_temp_dict = 0;
-static PyObject *__pyx_v_10FileWriter_fq1_qual = 0;
 static PyObject *__pyx_f_10FileWriter_file_writer(PyObject *, PyObject *, int __pyx_skip_dispatch); /*proto*/
 static PyObject *__pyx_f_10FileWriter_index_search(PyObject *, PyObject *, PyObject *); /*proto*/
 #define __Pyx_MODULE_NAME "FileWriter"
@@ -1313,6 +1318,7 @@ int __pyx_module_is_main_FileWriter = 0;
 /* Implementation of 'FileWriter' */
 static const char __pyx_k_[] = "";
 static const char __pyx_k_N[] = "N";
+static const char __pyx_k_QC[] = "QC";
 static const char __pyx_k_R1[] = "R1";
 static const char __pyx_k__2[] = "@{}\n{}\n+\n{}\n";
 static const char __pyx_k__5[] = ":";
@@ -1335,9 +1341,9 @@ static const char __pyx_k_N_Limit[] = "N_Limit";
 static const char __pyx_k_Unknown[] = "Unknown";
 static const char __pyx_k_natsort[] = "natsort";
 static const char __pyx_k_unknown[] = "unknown";
+static const char __pyx_k_Filtered[] = "Filtered";
 static const char __pyx_k_TTTTTTTT[] = "TTTTTTTT";
 static const char __pyx_k_distance[] = "distance";
-static const char __pyx_k_Valkyries[] = "Valkyries";
 static const char __pyx_k_data_dict[] = "data_dict";
 static const char __pyx_k_fq1_batch[] = "fq1_batch";
 static const char __pyx_k_natsorted[] = "natsorted";
@@ -1348,7 +1354,6 @@ static const char __pyx_k_collections[] = "collections";
 static const char __pyx_k_defaultdict[] = "defaultdict";
 static const char __pyx_k_match_maker[] = "match_maker";
 static const char __pyx_k_FileWriter_pyx[] = "FileWriter.pyx";
-static const char __pyx_k_Sequence_Magic[] = "Sequence_Magic";
 static const char __pyx_k_query_mismatch[] = "query_mismatch";
 static const char __pyx_k_MinimumReadLength[] = "MinimumReadLength";
 static const char __pyx_k_master_index_dict[] = "master_index_dict";
@@ -1359,17 +1364,17 @@ static const char __pyx_k_index_search_locals_match_maker[] = "index_search.<loc
 static PyObject *__pyx_kp_u_;
 static PyObject *__pyx_n_s_FileWriter;
 static PyObject *__pyx_kp_s_FileWriter_pyx;
+static PyObject *__pyx_n_u_Filtered;
 static PyObject *__pyx_n_u_GhostIndex;
 static PyObject *__pyx_n_s_Levenshtein;
 static PyObject *__pyx_n_s_MinimumReadLength;
 static PyObject *__pyx_n_u_N;
 static PyObject *__pyx_n_s_N_Limit;
 static PyObject *__pyx_n_u_No_UMI;
+static PyObject *__pyx_n_u_QC;
 static PyObject *__pyx_n_u_R1;
-static PyObject *__pyx_n_s_Sequence_Magic;
 static PyObject *__pyx_n_u_TTTTTTTT;
 static PyObject *__pyx_n_u_Unknown;
-static PyObject *__pyx_n_s_Valkyries;
 static PyObject *__pyx_kp_u__2;
 static PyObject *__pyx_kp_u__5;
 static PyObject *__pyx_kp_u__6;
@@ -1409,15 +1414,16 @@ static PyObject *__pyx_int_1;
 static PyObject *__pyx_int_2;
 static PyObject *__pyx_int_26;
 static PyObject *__pyx_tuple__3;
+static PyObject *__pyx_tuple__7;
 static PyObject *__pyx_codeobj__4;
 /* Late includes */
 
 /* "FileWriter.pyx":11
- * cdef dict temp_dict = {}
  * cdef str fq1_name, fq1_seq, fq1_qual, marker_read, umi_fq, umi_anchor
+ * # data_dict = {}
  * data_dict = collections.defaultdict(lambda: collections.defaultdict(list))             # <<<<<<<<<<<<<<
  * 
- * cpdef object file_writer(object self, list fq1_batch):
+ * cpdef object file_writer(object self, fq1_batch):
  */
 
 /* Python wrapper */
@@ -1485,7 +1491,7 @@ static PyObject *__pyx_lambda_funcdef_10FileWriter_lambda(CYTHON_UNUSED PyObject
 /* "FileWriter.pyx":13
  * data_dict = collections.defaultdict(lambda: collections.defaultdict(list))
  * 
- * cpdef object file_writer(object self, list fq1_batch):             # <<<<<<<<<<<<<<
+ * cpdef object file_writer(object self, fq1_batch):             # <<<<<<<<<<<<<<
  * 
  *     for fq1_read in fq1_batch:
  */
@@ -1495,112 +1501,203 @@ static PyObject *__pyx_f_10FileWriter_file_writer(PyObject *__pyx_v_self, PyObje
   PyObject *__pyx_v_fq1_read = NULL;
   PyObject *__pyx_v_fq1_name = NULL;
   PyObject *__pyx_v_fq1_seq = NULL;
+  PyObject *__pyx_v_fq1_qual = NULL;
   PyObject *__pyx_v_min_length = NULL;
   PyObject *__pyx_v_sample_index = NULL;
+  PyObject *__pyx_v_index_mismatch = NULL;
   CYTHON_UNUSED PyObject *__pyx_v_marker_read = NULL;
+  int __pyx_v_filtered;
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   Py_ssize_t __pyx_t_2;
-  PyObject *__pyx_t_3 = NULL;
+  PyObject *(*__pyx_t_3)(PyObject *);
   PyObject *__pyx_t_4 = NULL;
   PyObject *__pyx_t_5 = NULL;
-  int __pyx_t_6;
-  int __pyx_t_7;
-  int __pyx_t_8;
-  Py_ssize_t __pyx_t_9;
-  PyObject *__pyx_t_10 = NULL;
+  PyObject *__pyx_t_6 = NULL;
+  PyObject *__pyx_t_7 = NULL;
+  PyObject *(*__pyx_t_8)(PyObject *);
+  int __pyx_t_9;
+  int __pyx_t_10;
   int __pyx_t_11;
-  PyObject *__pyx_t_12 = NULL;
+  Py_ssize_t __pyx_t_12;
   int __pyx_t_13;
+  int __pyx_t_14;
+  PyObject *__pyx_t_15 = NULL;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("file_writer", 0);
 
   /* "FileWriter.pyx":15
- * cpdef object file_writer(object self, list fq1_batch):
+ * cpdef object file_writer(object self, fq1_batch):
  * 
  *     for fq1_read in fq1_batch:             # <<<<<<<<<<<<<<
  *         fq1_name = fq1_read[0]
  *         fq1_seq = fq1_read[1]
  */
-  if (unlikely(__pyx_v_fq1_batch == Py_None)) {
-    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not iterable");
-    __PYX_ERR(0, 15, __pyx_L1_error)
+  if (likely(PyList_CheckExact(__pyx_v_fq1_batch)) || PyTuple_CheckExact(__pyx_v_fq1_batch)) {
+    __pyx_t_1 = __pyx_v_fq1_batch; __Pyx_INCREF(__pyx_t_1); __pyx_t_2 = 0;
+    __pyx_t_3 = NULL;
+  } else {
+    __pyx_t_2 = -1; __pyx_t_1 = PyObject_GetIter(__pyx_v_fq1_batch); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 15, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __pyx_t_3 = Py_TYPE(__pyx_t_1)->tp_iternext; if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 15, __pyx_L1_error)
   }
-  __pyx_t_1 = __pyx_v_fq1_batch; __Pyx_INCREF(__pyx_t_1); __pyx_t_2 = 0;
   for (;;) {
-    if (__pyx_t_2 >= PyList_GET_SIZE(__pyx_t_1)) break;
-    #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-    __pyx_t_3 = PyList_GET_ITEM(__pyx_t_1, __pyx_t_2); __Pyx_INCREF(__pyx_t_3); __pyx_t_2++; if (unlikely(0 < 0)) __PYX_ERR(0, 15, __pyx_L1_error)
-    #else
-    __pyx_t_3 = PySequence_ITEM(__pyx_t_1, __pyx_t_2); __pyx_t_2++; if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 15, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    #endif
-    __Pyx_XDECREF_SET(__pyx_v_fq1_read, __pyx_t_3);
-    __pyx_t_3 = 0;
+    if (likely(!__pyx_t_3)) {
+      if (likely(PyList_CheckExact(__pyx_t_1))) {
+        if (__pyx_t_2 >= PyList_GET_SIZE(__pyx_t_1)) break;
+        #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
+        __pyx_t_4 = PyList_GET_ITEM(__pyx_t_1, __pyx_t_2); __Pyx_INCREF(__pyx_t_4); __pyx_t_2++; if (unlikely(0 < 0)) __PYX_ERR(0, 15, __pyx_L1_error)
+        #else
+        __pyx_t_4 = PySequence_ITEM(__pyx_t_1, __pyx_t_2); __pyx_t_2++; if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 15, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_4);
+        #endif
+      } else {
+        if (__pyx_t_2 >= PyTuple_GET_SIZE(__pyx_t_1)) break;
+        #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
+        __pyx_t_4 = PyTuple_GET_ITEM(__pyx_t_1, __pyx_t_2); __Pyx_INCREF(__pyx_t_4); __pyx_t_2++; if (unlikely(0 < 0)) __PYX_ERR(0, 15, __pyx_L1_error)
+        #else
+        __pyx_t_4 = PySequence_ITEM(__pyx_t_1, __pyx_t_2); __pyx_t_2++; if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 15, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_4);
+        #endif
+      }
+    } else {
+      __pyx_t_4 = __pyx_t_3(__pyx_t_1);
+      if (unlikely(!__pyx_t_4)) {
+        PyObject* exc_type = PyErr_Occurred();
+        if (exc_type) {
+          if (likely(__Pyx_PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
+          else __PYX_ERR(0, 15, __pyx_L1_error)
+        }
+        break;
+      }
+      __Pyx_GOTREF(__pyx_t_4);
+    }
+    __Pyx_XDECREF_SET(__pyx_v_fq1_read, __pyx_t_4);
+    __pyx_t_4 = 0;
 
     /* "FileWriter.pyx":16
  * 
  *     for fq1_read in fq1_batch:
  *         fq1_name = fq1_read[0]             # <<<<<<<<<<<<<<
  *         fq1_seq = fq1_read[1]
- * 
+ *         fq1_qual = fq1_read[3]
  */
-    __pyx_t_3 = __Pyx_GetItemInt(__pyx_v_fq1_read, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 16, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_XDECREF_SET(__pyx_v_fq1_name, __pyx_t_3);
-    __pyx_t_3 = 0;
+    __pyx_t_4 = __Pyx_GetItemInt(__pyx_v_fq1_read, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 16, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
+    __Pyx_XDECREF_SET(__pyx_v_fq1_name, __pyx_t_4);
+    __pyx_t_4 = 0;
 
     /* "FileWriter.pyx":17
  *     for fq1_read in fq1_batch:
  *         fq1_name = fq1_read[0]
  *         fq1_seq = fq1_read[1]             # <<<<<<<<<<<<<<
+ *         fq1_qual = fq1_read[3]
+ * 
+ */
+    __pyx_t_4 = __Pyx_GetItemInt(__pyx_v_fq1_read, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 17, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
+    __Pyx_XDECREF_SET(__pyx_v_fq1_seq, __pyx_t_4);
+    __pyx_t_4 = 0;
+
+    /* "FileWriter.pyx":18
+ *         fq1_name = fq1_read[0]
+ *         fq1_seq = fq1_read[1]
+ *         fq1_qual = fq1_read[3]             # <<<<<<<<<<<<<<
  * 
  *         # Apply Filters
  */
-    __pyx_t_3 = __Pyx_GetItemInt(__pyx_v_fq1_read, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 17, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_XDECREF_SET(__pyx_v_fq1_seq, __pyx_t_3);
-    __pyx_t_3 = 0;
+    __pyx_t_4 = __Pyx_GetItemInt(__pyx_v_fq1_read, 3, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 18, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
+    __Pyx_XDECREF_SET(__pyx_v_fq1_qual, __pyx_t_4);
+    __pyx_t_4 = 0;
 
-    /* "FileWriter.pyx":20
+    /* "FileWriter.pyx":21
  * 
  *         # Apply Filters
  *         min_length = self.args.MinimumReadLength             # <<<<<<<<<<<<<<
  * 
- *         sample_index = index_search(self.master_index_dict, fq1_name, temp_dict)
+ *         sample_index, index_mismatch = index_search(self.master_index_dict, fq1_name, temp_dict)
  */
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_args); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 20, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_MinimumReadLength); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 20, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_args); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 21, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __Pyx_XDECREF_SET(__pyx_v_min_length, __pyx_t_4);
-    __pyx_t_4 = 0;
-
-    /* "FileWriter.pyx":22
- *         min_length = self.args.MinimumReadLength
- * 
- *         sample_index = index_search(self.master_index_dict, fq1_name, temp_dict)             # <<<<<<<<<<<<<<
- *         marker_read = ""
- *         if not self.sample_manifest_dictionary[sample_index] and sample_index != "Unknown":
- */
-    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_master_index_dict); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 22, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __pyx_t_3 = __pyx_v_10FileWriter_temp_dict;
-    __Pyx_INCREF(__pyx_t_3);
-    __pyx_t_5 = __pyx_f_10FileWriter_index_search(__pyx_t_4, __pyx_v_fq1_name, __pyx_t_3); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 22, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_MinimumReadLength); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 21, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __Pyx_XDECREF_SET(__pyx_v_sample_index, __pyx_t_5);
+    __Pyx_XDECREF_SET(__pyx_v_min_length, __pyx_t_5);
     __pyx_t_5 = 0;
 
     /* "FileWriter.pyx":23
+ *         min_length = self.args.MinimumReadLength
  * 
- *         sample_index = index_search(self.master_index_dict, fq1_name, temp_dict)
+ *         sample_index, index_mismatch = index_search(self.master_index_dict, fq1_name, temp_dict)             # <<<<<<<<<<<<<<
+ *         marker_read = ""
+ *         if not self.sample_manifest_dictionary[sample_index] and sample_index != "Unknown":
+ */
+    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_master_index_dict); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 23, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __pyx_t_4 = __pyx_v_10FileWriter_temp_dict;
+    __Pyx_INCREF(__pyx_t_4);
+    __pyx_t_6 = __pyx_f_10FileWriter_index_search(__pyx_t_5, __pyx_v_fq1_name, __pyx_t_4); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 23, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    if ((likely(PyTuple_CheckExact(__pyx_t_6))) || (PyList_CheckExact(__pyx_t_6))) {
+      PyObject* sequence = __pyx_t_6;
+      Py_ssize_t size = __Pyx_PySequence_SIZE(sequence);
+      if (unlikely(size != 2)) {
+        if (size > 2) __Pyx_RaiseTooManyValuesError(2);
+        else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
+        __PYX_ERR(0, 23, __pyx_L1_error)
+      }
+      #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
+      if (likely(PyTuple_CheckExact(sequence))) {
+        __pyx_t_4 = PyTuple_GET_ITEM(sequence, 0); 
+        __pyx_t_5 = PyTuple_GET_ITEM(sequence, 1); 
+      } else {
+        __pyx_t_4 = PyList_GET_ITEM(sequence, 0); 
+        __pyx_t_5 = PyList_GET_ITEM(sequence, 1); 
+      }
+      __Pyx_INCREF(__pyx_t_4);
+      __Pyx_INCREF(__pyx_t_5);
+      #else
+      __pyx_t_4 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 23, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_4);
+      __pyx_t_5 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 23, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_5);
+      #endif
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    } else {
+      Py_ssize_t index = -1;
+      __pyx_t_7 = PyObject_GetIter(__pyx_t_6); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 23, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_7);
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+      __pyx_t_8 = Py_TYPE(__pyx_t_7)->tp_iternext;
+      index = 0; __pyx_t_4 = __pyx_t_8(__pyx_t_7); if (unlikely(!__pyx_t_4)) goto __pyx_L5_unpacking_failed;
+      __Pyx_GOTREF(__pyx_t_4);
+      index = 1; __pyx_t_5 = __pyx_t_8(__pyx_t_7); if (unlikely(!__pyx_t_5)) goto __pyx_L5_unpacking_failed;
+      __Pyx_GOTREF(__pyx_t_5);
+      if (__Pyx_IternextUnpackEndCheck(__pyx_t_8(__pyx_t_7), 2) < 0) __PYX_ERR(0, 23, __pyx_L1_error)
+      __pyx_t_8 = NULL;
+      __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+      goto __pyx_L6_unpacking_done;
+      __pyx_L5_unpacking_failed:;
+      __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+      __pyx_t_8 = NULL;
+      if (__Pyx_IterFinish() == 0) __Pyx_RaiseNeedMoreValuesError(index);
+      __PYX_ERR(0, 23, __pyx_L1_error)
+      __pyx_L6_unpacking_done:;
+    }
+    __Pyx_XDECREF_SET(__pyx_v_sample_index, __pyx_t_4);
+    __pyx_t_4 = 0;
+    __Pyx_XDECREF_SET(__pyx_v_index_mismatch, __pyx_t_5);
+    __pyx_t_5 = 0;
+
+    /* "FileWriter.pyx":24
+ * 
+ *         sample_index, index_mismatch = index_search(self.master_index_dict, fq1_name, temp_dict)
  *         marker_read = ""             # <<<<<<<<<<<<<<
  *         if not self.sample_manifest_dictionary[sample_index] and sample_index != "Unknown":
  *             sample_index = "GhostIndex"
@@ -1608,32 +1705,32 @@ static PyObject *__pyx_f_10FileWriter_file_writer(PyObject *__pyx_v_self, PyObje
     __Pyx_INCREF(__pyx_kp_u_);
     __Pyx_XDECREF_SET(__pyx_v_marker_read, __pyx_kp_u_);
 
-    /* "FileWriter.pyx":24
- *         sample_index = index_search(self.master_index_dict, fq1_name, temp_dict)
+    /* "FileWriter.pyx":25
+ *         sample_index, index_mismatch = index_search(self.master_index_dict, fq1_name, temp_dict)
  *         marker_read = ""
  *         if not self.sample_manifest_dictionary[sample_index] and sample_index != "Unknown":             # <<<<<<<<<<<<<<
  *             sample_index = "GhostIndex"
  * 
  */
-    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_sample_manifest_dictionary); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 24, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_sample_manifest_dictionary); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 25, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __pyx_t_5 = __Pyx_PyObject_GetItem(__pyx_t_6, __pyx_v_sample_index); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 25, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_3 = __Pyx_PyObject_GetItem(__pyx_t_5, __pyx_v_sample_index); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 24, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    __pyx_t_10 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely(__pyx_t_10 < 0)) __PYX_ERR(0, 25, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(0, 24, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_8 = ((!__pyx_t_7) != 0);
-    if (__pyx_t_8) {
+    __pyx_t_11 = ((!__pyx_t_10) != 0);
+    if (__pyx_t_11) {
     } else {
-      __pyx_t_6 = __pyx_t_8;
-      goto __pyx_L6_bool_binop_done;
+      __pyx_t_9 = __pyx_t_11;
+      goto __pyx_L8_bool_binop_done;
     }
-    __pyx_t_8 = (__Pyx_PyUnicode_Equals(__pyx_v_sample_index, __pyx_n_u_Unknown, Py_NE)); if (unlikely(__pyx_t_8 < 0)) __PYX_ERR(0, 24, __pyx_L1_error)
-    __pyx_t_6 = __pyx_t_8;
-    __pyx_L6_bool_binop_done:;
-    if (__pyx_t_6) {
+    __pyx_t_11 = (__Pyx_PyUnicode_Equals(__pyx_v_sample_index, __pyx_n_u_Unknown, Py_NE)); if (unlikely(__pyx_t_11 < 0)) __PYX_ERR(0, 25, __pyx_L1_error)
+    __pyx_t_9 = __pyx_t_11;
+    __pyx_L8_bool_binop_done:;
+    if (__pyx_t_9) {
 
-      /* "FileWriter.pyx":25
+      /* "FileWriter.pyx":26
  *         marker_read = ""
  *         if not self.sample_manifest_dictionary[sample_index] and sample_index != "Unknown":
  *             sample_index = "GhostIndex"             # <<<<<<<<<<<<<<
@@ -1643,8 +1740,8 @@ static PyObject *__pyx_f_10FileWriter_file_writer(PyObject *__pyx_v_self, PyObje
       __Pyx_INCREF(__pyx_n_u_GhostIndex);
       __Pyx_DECREF_SET(__pyx_v_sample_index, __pyx_n_u_GhostIndex);
 
-      /* "FileWriter.pyx":24
- *         sample_index = index_search(self.master_index_dict, fq1_name, temp_dict)
+      /* "FileWriter.pyx":25
+ *         sample_index, index_mismatch = index_search(self.master_index_dict, fq1_name, temp_dict)
  *         marker_read = ""
  *         if not self.sample_manifest_dictionary[sample_index] and sample_index != "Unknown":             # <<<<<<<<<<<<<<
  *             sample_index = "GhostIndex"
@@ -1652,45 +1749,45 @@ static PyObject *__pyx_f_10FileWriter_file_writer(PyObject *__pyx_v_self, PyObje
  */
     }
 
-    /* "FileWriter.pyx":27
+    /* "FileWriter.pyx":28
  *             sample_index = "GhostIndex"
  * 
  *         if sample_index is not "Unknown" and sample_index is not "GhostIndex":             # <<<<<<<<<<<<<<
  *             marker_read = self.sample_manifest_dictionary[sample_index][1]
  * 
  */
-    __pyx_t_8 = (__pyx_v_sample_index != __pyx_n_u_Unknown);
-    __pyx_t_7 = (__pyx_t_8 != 0);
-    if (__pyx_t_7) {
+    __pyx_t_11 = (__pyx_v_sample_index != __pyx_n_u_Unknown);
+    __pyx_t_10 = (__pyx_t_11 != 0);
+    if (__pyx_t_10) {
     } else {
-      __pyx_t_6 = __pyx_t_7;
-      goto __pyx_L9_bool_binop_done;
+      __pyx_t_9 = __pyx_t_10;
+      goto __pyx_L11_bool_binop_done;
     }
-    __pyx_t_7 = (__pyx_v_sample_index != __pyx_n_u_GhostIndex);
-    __pyx_t_8 = (__pyx_t_7 != 0);
-    __pyx_t_6 = __pyx_t_8;
-    __pyx_L9_bool_binop_done:;
-    if (__pyx_t_6) {
+    __pyx_t_10 = (__pyx_v_sample_index != __pyx_n_u_GhostIndex);
+    __pyx_t_11 = (__pyx_t_10 != 0);
+    __pyx_t_9 = __pyx_t_11;
+    __pyx_L11_bool_binop_done:;
+    if (__pyx_t_9) {
 
-      /* "FileWriter.pyx":28
+      /* "FileWriter.pyx":29
  * 
  *         if sample_index is not "Unknown" and sample_index is not "GhostIndex":
  *             marker_read = self.sample_manifest_dictionary[sample_index][1]             # <<<<<<<<<<<<<<
  * 
  *         # Filter reads based on length and number of N's.
  */
-      __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_sample_manifest_dictionary); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 28, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_3);
-      __pyx_t_5 = __Pyx_PyObject_GetItem(__pyx_t_3, __pyx_v_sample_index); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 28, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_sample_manifest_dictionary); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 29, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_3 = __Pyx_GetItemInt(__pyx_t_5, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 28, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_3);
+      __pyx_t_6 = __Pyx_PyObject_GetItem(__pyx_t_5, __pyx_v_sample_index); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 29, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_6);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __Pyx_DECREF_SET(__pyx_v_marker_read, __pyx_t_3);
-      __pyx_t_3 = 0;
+      __pyx_t_5 = __Pyx_GetItemInt(__pyx_t_6, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 29, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_5);
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+      __Pyx_DECREF_SET(__pyx_v_marker_read, __pyx_t_5);
+      __pyx_t_5 = 0;
 
-      /* "FileWriter.pyx":27
+      /* "FileWriter.pyx":28
  *             sample_index = "GhostIndex"
  * 
  *         if sample_index is not "Unknown" and sample_index is not "GhostIndex":             # <<<<<<<<<<<<<<
@@ -1699,256 +1796,417 @@ static PyObject *__pyx_f_10FileWriter_file_writer(PyObject *__pyx_v_self, PyObje
  */
     }
 
-    /* "FileWriter.pyx":31
+    /* "FileWriter.pyx":32
  * 
  *         # Filter reads based on length and number of N's.
- *         if len(fq1_seq) < min_length or fq1_seq.count("N") / len(fq1_seq) >= self.args.N_Limit:             # <<<<<<<<<<<<<<
- *             return data_dict
- * 
+ *         filtered = False             # <<<<<<<<<<<<<<
+ *         if len(fq1_seq) < min_length or fq1_seq.count("N") / len(fq1_seq) >= self.args.N_Limit:
+ *             data_dict[sample_index]["QC"].append("Filtered")
  */
-    __pyx_t_9 = PyObject_Length(__pyx_v_fq1_seq); if (unlikely(__pyx_t_9 == ((Py_ssize_t)-1))) __PYX_ERR(0, 31, __pyx_L1_error)
-    __pyx_t_3 = PyInt_FromSsize_t(__pyx_t_9); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 31, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_5 = PyObject_RichCompare(__pyx_t_3, __pyx_v_min_length, Py_LT); __Pyx_XGOTREF(__pyx_t_5); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 31, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_8 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely(__pyx_t_8 < 0)) __PYX_ERR(0, 31, __pyx_L1_error)
+    __pyx_v_filtered = 0;
+
+    /* "FileWriter.pyx":33
+ *         # Filter reads based on length and number of N's.
+ *         filtered = False
+ *         if len(fq1_seq) < min_length or fq1_seq.count("N") / len(fq1_seq) >= self.args.N_Limit:             # <<<<<<<<<<<<<<
+ *             data_dict[sample_index]["QC"].append("Filtered")
+ *             filtered = True
+ */
+    __pyx_t_12 = PyObject_Length(__pyx_v_fq1_seq); if (unlikely(__pyx_t_12 == ((Py_ssize_t)-1))) __PYX_ERR(0, 33, __pyx_L1_error)
+    __pyx_t_5 = PyInt_FromSsize_t(__pyx_t_12); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 33, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __pyx_t_6 = PyObject_RichCompare(__pyx_t_5, __pyx_v_min_length, Py_LT); __Pyx_XGOTREF(__pyx_t_6); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 33, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    if (!__pyx_t_8) {
+    __pyx_t_11 = __Pyx_PyObject_IsTrue(__pyx_t_6); if (unlikely(__pyx_t_11 < 0)) __PYX_ERR(0, 33, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    if (!__pyx_t_11) {
     } else {
-      __pyx_t_6 = __pyx_t_8;
-      goto __pyx_L12_bool_binop_done;
+      __pyx_t_9 = __pyx_t_11;
+      goto __pyx_L14_bool_binop_done;
     }
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_fq1_seq, __pyx_n_s_count); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 31, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_fq1_seq, __pyx_n_s_count); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 33, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
     __pyx_t_4 = NULL;
-    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_3))) {
-      __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_3);
+    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_5))) {
+      __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_5);
       if (likely(__pyx_t_4)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
         __Pyx_INCREF(__pyx_t_4);
         __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_3, function);
+        __Pyx_DECREF_SET(__pyx_t_5, function);
       }
     }
-    __pyx_t_5 = (__pyx_t_4) ? __Pyx_PyObject_Call2Args(__pyx_t_3, __pyx_t_4, __pyx_n_u_N) : __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_n_u_N);
+    __pyx_t_6 = (__pyx_t_4) ? __Pyx_PyObject_Call2Args(__pyx_t_5, __pyx_t_4, __pyx_n_u_N) : __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_n_u_N);
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-    if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 31, __pyx_L1_error)
+    if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 33, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __pyx_t_12 = PyObject_Length(__pyx_v_fq1_seq); if (unlikely(__pyx_t_12 == ((Py_ssize_t)-1))) __PYX_ERR(0, 33, __pyx_L1_error)
+    __pyx_t_5 = PyInt_FromSsize_t(__pyx_t_12); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 33, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_9 = PyObject_Length(__pyx_v_fq1_seq); if (unlikely(__pyx_t_9 == ((Py_ssize_t)-1))) __PYX_ERR(0, 31, __pyx_L1_error)
-    __pyx_t_3 = PyInt_FromSsize_t(__pyx_t_9); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 31, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_4 = __Pyx_PyNumber_Divide(__pyx_t_5, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 31, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyNumber_Divide(__pyx_t_6, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 33, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_args); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 31, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_N_Limit); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 31, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_args); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 33, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = PyObject_RichCompare(__pyx_t_4, __pyx_t_5, Py_GE); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 31, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_N_Limit); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 33, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    __pyx_t_8 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely(__pyx_t_8 < 0)) __PYX_ERR(0, 31, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_6 = __pyx_t_8;
-    __pyx_L12_bool_binop_done:;
-    if (__pyx_t_6) {
-
-      /* "FileWriter.pyx":32
- *         # Filter reads based on length and number of N's.
- *         if len(fq1_seq) < min_length or fq1_seq.count("N") / len(fq1_seq) >= self.args.N_Limit:
- *             return data_dict             # <<<<<<<<<<<<<<
- * 
- *         if sample_index in data_dict:
- */
-      __Pyx_XDECREF(__pyx_r);
-      __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_data_dict); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 32, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_3);
-      __pyx_r = __pyx_t_3;
-      __pyx_t_3 = 0;
-      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-      goto __pyx_L0;
-
-      /* "FileWriter.pyx":31
- * 
- *         # Filter reads based on length and number of N's.
- *         if len(fq1_seq) < min_length or fq1_seq.count("N") / len(fq1_seq) >= self.args.N_Limit:             # <<<<<<<<<<<<<<
- *             return data_dict
- * 
- */
-    }
-
-    /* "FileWriter.pyx":34
- *             return data_dict
- * 
- *         if sample_index in data_dict:             # <<<<<<<<<<<<<<
- *             data_dict[sample_index]["R1"].append("@{}\n{}\n+\n{}\n".format(fq1_name, fq1_seq, fq1_qual))
- * 
- */
-    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_data_dict); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 34, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_6 = (__Pyx_PySequence_ContainsTF(__pyx_v_sample_index, __pyx_t_3, Py_EQ)); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 34, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_8 = (__pyx_t_6 != 0);
-    if (__pyx_t_8) {
-
-      /* "FileWriter.pyx":35
- * 
- *         if sample_index in data_dict:
- *             data_dict[sample_index]["R1"].append("@{}\n{}\n+\n{}\n".format(fq1_name, fq1_seq, fq1_qual))             # <<<<<<<<<<<<<<
- * 
- *         else:
- */
-      __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_data_dict); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 35, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_3);
-      __pyx_t_5 = __Pyx_PyObject_GetItem(__pyx_t_3, __pyx_v_sample_index); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 35, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_5);
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_3 = __Pyx_PyObject_Dict_GetItem(__pyx_t_5, __pyx_n_u_R1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 35, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_3);
-      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_kp_u__2, __pyx_n_s_format); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 35, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      __pyx_t_10 = NULL;
-      __pyx_t_11 = 0;
-      if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_4))) {
-        __pyx_t_10 = PyMethod_GET_SELF(__pyx_t_4);
-        if (likely(__pyx_t_10)) {
-          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
-          __Pyx_INCREF(__pyx_t_10);
-          __Pyx_INCREF(function);
-          __Pyx_DECREF_SET(__pyx_t_4, function);
-          __pyx_t_11 = 1;
-        }
-      }
-      #if CYTHON_FAST_PYCALL
-      if (PyFunction_Check(__pyx_t_4)) {
-        PyObject *__pyx_temp[4] = {__pyx_t_10, __pyx_v_fq1_name, __pyx_v_fq1_seq, __pyx_v_10FileWriter_fq1_qual};
-        __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-__pyx_t_11, 3+__pyx_t_11); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 35, __pyx_L1_error)
-        __Pyx_XDECREF(__pyx_t_10); __pyx_t_10 = 0;
-        __Pyx_GOTREF(__pyx_t_5);
-      } else
-      #endif
-      #if CYTHON_FAST_PYCCALL
-      if (__Pyx_PyFastCFunction_Check(__pyx_t_4)) {
-        PyObject *__pyx_temp[4] = {__pyx_t_10, __pyx_v_fq1_name, __pyx_v_fq1_seq, __pyx_v_10FileWriter_fq1_qual};
-        __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-__pyx_t_11, 3+__pyx_t_11); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 35, __pyx_L1_error)
-        __Pyx_XDECREF(__pyx_t_10); __pyx_t_10 = 0;
-        __Pyx_GOTREF(__pyx_t_5);
-      } else
-      #endif
-      {
-        __pyx_t_12 = PyTuple_New(3+__pyx_t_11); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 35, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_12);
-        if (__pyx_t_10) {
-          __Pyx_GIVEREF(__pyx_t_10); PyTuple_SET_ITEM(__pyx_t_12, 0, __pyx_t_10); __pyx_t_10 = NULL;
-        }
-        __Pyx_INCREF(__pyx_v_fq1_name);
-        __Pyx_GIVEREF(__pyx_v_fq1_name);
-        PyTuple_SET_ITEM(__pyx_t_12, 0+__pyx_t_11, __pyx_v_fq1_name);
-        __Pyx_INCREF(__pyx_v_fq1_seq);
-        __Pyx_GIVEREF(__pyx_v_fq1_seq);
-        PyTuple_SET_ITEM(__pyx_t_12, 1+__pyx_t_11, __pyx_v_fq1_seq);
-        __Pyx_INCREF(__pyx_v_10FileWriter_fq1_qual);
-        __Pyx_GIVEREF(__pyx_v_10FileWriter_fq1_qual);
-        PyTuple_SET_ITEM(__pyx_t_12, 2+__pyx_t_11, __pyx_v_10FileWriter_fq1_qual);
-        __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_12, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 35, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_5);
-        __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
-      }
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __pyx_t_13 = __Pyx_PyObject_Append(__pyx_t_3, __pyx_t_5); if (unlikely(__pyx_t_13 == ((int)-1))) __PYX_ERR(0, 35, __pyx_L1_error)
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __pyx_t_5 = PyObject_RichCompare(__pyx_t_4, __pyx_t_6, Py_GE); __Pyx_XGOTREF(__pyx_t_5); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 33, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    __pyx_t_11 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely(__pyx_t_11 < 0)) __PYX_ERR(0, 33, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __pyx_t_9 = __pyx_t_11;
+    __pyx_L14_bool_binop_done:;
+    if (__pyx_t_9) {
 
       /* "FileWriter.pyx":34
- *             return data_dict
- * 
- *         if sample_index in data_dict:             # <<<<<<<<<<<<<<
- *             data_dict[sample_index]["R1"].append("@{}\n{}\n+\n{}\n".format(fq1_name, fq1_seq, fq1_qual))
+ *         filtered = False
+ *         if len(fq1_seq) < min_length or fq1_seq.count("N") / len(fq1_seq) >= self.args.N_Limit:
+ *             data_dict[sample_index]["QC"].append("Filtered")             # <<<<<<<<<<<<<<
+ *             filtered = True
  * 
  */
-      goto __pyx_L14;
+      __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_data_dict); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 34, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_5);
+      __pyx_t_6 = __Pyx_PyObject_GetItem(__pyx_t_5, __pyx_v_sample_index); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 34, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_6);
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __pyx_t_5 = __Pyx_PyObject_Dict_GetItem(__pyx_t_6, __pyx_n_u_QC); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 34, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_5);
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+      __pyx_t_13 = __Pyx_PyObject_Append(__pyx_t_5, __pyx_n_u_Filtered); if (unlikely(__pyx_t_13 == ((int)-1))) __PYX_ERR(0, 34, __pyx_L1_error)
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+
+      /* "FileWriter.pyx":35
+ *         if len(fq1_seq) < min_length or fq1_seq.count("N") / len(fq1_seq) >= self.args.N_Limit:
+ *             data_dict[sample_index]["QC"].append("Filtered")
+ *             filtered = True             # <<<<<<<<<<<<<<
+ * 
+ *         if not filtered:
+ */
+      __pyx_v_filtered = 1;
+
+      /* "FileWriter.pyx":33
+ *         # Filter reads based on length and number of N's.
+ *         filtered = False
+ *         if len(fq1_seq) < min_length or fq1_seq.count("N") / len(fq1_seq) >= self.args.N_Limit:             # <<<<<<<<<<<<<<
+ *             data_dict[sample_index]["QC"].append("Filtered")
+ *             filtered = True
+ */
     }
 
-    /* "FileWriter.pyx":38
+    /* "FileWriter.pyx":37
+ *             filtered = True
  * 
- *         else:
- *             data_dict[sample_index]["R1"] = ["@{}\n{}\n+\n{}\n".format(fq1_name, fq1_seq, fq1_qual)]             # <<<<<<<<<<<<<<
- * 
- *     return data_dict
+ *         if not filtered:             # <<<<<<<<<<<<<<
+ *             if sample_index in data_dict:
+ *                 data_dict[sample_index]["R1"].append("@{}\n{}\n+\n{}\n".format(fq1_name, fq1_seq, fq1_qual))
  */
-    /*else*/ {
-      __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_kp_u__2, __pyx_n_s_format); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 38, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_3);
-      __pyx_t_4 = NULL;
-      __pyx_t_11 = 0;
-      if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_3))) {
-        __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_3);
-        if (likely(__pyx_t_4)) {
-          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-          __Pyx_INCREF(__pyx_t_4);
-          __Pyx_INCREF(function);
-          __Pyx_DECREF_SET(__pyx_t_3, function);
-          __pyx_t_11 = 1;
-        }
-      }
-      #if CYTHON_FAST_PYCALL
-      if (PyFunction_Check(__pyx_t_3)) {
-        PyObject *__pyx_temp[4] = {__pyx_t_4, __pyx_v_fq1_name, __pyx_v_fq1_seq, __pyx_v_10FileWriter_fq1_qual};
-        __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_11, 3+__pyx_t_11); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 38, __pyx_L1_error)
-        __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-        __Pyx_GOTREF(__pyx_t_5);
-      } else
-      #endif
-      #if CYTHON_FAST_PYCCALL
-      if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
-        PyObject *__pyx_temp[4] = {__pyx_t_4, __pyx_v_fq1_name, __pyx_v_fq1_seq, __pyx_v_10FileWriter_fq1_qual};
-        __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_11, 3+__pyx_t_11); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 38, __pyx_L1_error)
-        __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-        __Pyx_GOTREF(__pyx_t_5);
-      } else
-      #endif
-      {
-        __pyx_t_12 = PyTuple_New(3+__pyx_t_11); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 38, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_12);
-        if (__pyx_t_4) {
-          __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_12, 0, __pyx_t_4); __pyx_t_4 = NULL;
-        }
-        __Pyx_INCREF(__pyx_v_fq1_name);
-        __Pyx_GIVEREF(__pyx_v_fq1_name);
-        PyTuple_SET_ITEM(__pyx_t_12, 0+__pyx_t_11, __pyx_v_fq1_name);
-        __Pyx_INCREF(__pyx_v_fq1_seq);
-        __Pyx_GIVEREF(__pyx_v_fq1_seq);
-        PyTuple_SET_ITEM(__pyx_t_12, 1+__pyx_t_11, __pyx_v_fq1_seq);
-        __Pyx_INCREF(__pyx_v_10FileWriter_fq1_qual);
-        __Pyx_GIVEREF(__pyx_v_10FileWriter_fq1_qual);
-        PyTuple_SET_ITEM(__pyx_t_12, 2+__pyx_t_11, __pyx_v_10FileWriter_fq1_qual);
-        __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_12, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 38, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_5);
-        __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
-      }
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_3 = PyList_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 38, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_3);
-      __Pyx_GIVEREF(__pyx_t_5);
-      PyList_SET_ITEM(__pyx_t_3, 0, __pyx_t_5);
-      __pyx_t_5 = 0;
+    __pyx_t_9 = ((!(__pyx_v_filtered != 0)) != 0);
+    if (__pyx_t_9) {
+
+      /* "FileWriter.pyx":38
+ * 
+ *         if not filtered:
+ *             if sample_index in data_dict:             # <<<<<<<<<<<<<<
+ *                 data_dict[sample_index]["R1"].append("@{}\n{}\n+\n{}\n".format(fq1_name, fq1_seq, fq1_qual))
+ *                 if sample_index is not "Unknown":
+ */
       __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_data_dict); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 38, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
-      __pyx_t_12 = __Pyx_PyObject_GetItem(__pyx_t_5, __pyx_v_sample_index); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 38, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_12);
+      __pyx_t_9 = (__Pyx_PySequence_ContainsTF(__pyx_v_sample_index, __pyx_t_5, Py_EQ)); if (unlikely(__pyx_t_9 < 0)) __PYX_ERR(0, 38, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      if (unlikely(PyObject_SetItem(__pyx_t_12, __pyx_n_u_R1, __pyx_t_3) < 0)) __PYX_ERR(0, 38, __pyx_L1_error)
-      __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+      __pyx_t_11 = (__pyx_t_9 != 0);
+      if (__pyx_t_11) {
+
+        /* "FileWriter.pyx":39
+ *         if not filtered:
+ *             if sample_index in data_dict:
+ *                 data_dict[sample_index]["R1"].append("@{}\n{}\n+\n{}\n".format(fq1_name, fq1_seq, fq1_qual))             # <<<<<<<<<<<<<<
+ *                 if sample_index is not "Unknown":
+ *                     data_dict[sample_index]["QC"][index_mismatch] += 1
+ */
+        __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_data_dict); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 39, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_5);
+        __pyx_t_6 = __Pyx_PyObject_GetItem(__pyx_t_5, __pyx_v_sample_index); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 39, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_6);
+        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+        __pyx_t_5 = __Pyx_PyObject_Dict_GetItem(__pyx_t_6, __pyx_n_u_R1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 39, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_5);
+        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+        __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_kp_u__2, __pyx_n_s_format); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 39, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_4);
+        __pyx_t_7 = NULL;
+        __pyx_t_14 = 0;
+        if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_4))) {
+          __pyx_t_7 = PyMethod_GET_SELF(__pyx_t_4);
+          if (likely(__pyx_t_7)) {
+            PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
+            __Pyx_INCREF(__pyx_t_7);
+            __Pyx_INCREF(function);
+            __Pyx_DECREF_SET(__pyx_t_4, function);
+            __pyx_t_14 = 1;
+          }
+        }
+        #if CYTHON_FAST_PYCALL
+        if (PyFunction_Check(__pyx_t_4)) {
+          PyObject *__pyx_temp[4] = {__pyx_t_7, __pyx_v_fq1_name, __pyx_v_fq1_seq, __pyx_v_fq1_qual};
+          __pyx_t_6 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-__pyx_t_14, 3+__pyx_t_14); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 39, __pyx_L1_error)
+          __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
+          __Pyx_GOTREF(__pyx_t_6);
+        } else
+        #endif
+        #if CYTHON_FAST_PYCCALL
+        if (__Pyx_PyFastCFunction_Check(__pyx_t_4)) {
+          PyObject *__pyx_temp[4] = {__pyx_t_7, __pyx_v_fq1_name, __pyx_v_fq1_seq, __pyx_v_fq1_qual};
+          __pyx_t_6 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-__pyx_t_14, 3+__pyx_t_14); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 39, __pyx_L1_error)
+          __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
+          __Pyx_GOTREF(__pyx_t_6);
+        } else
+        #endif
+        {
+          __pyx_t_15 = PyTuple_New(3+__pyx_t_14); if (unlikely(!__pyx_t_15)) __PYX_ERR(0, 39, __pyx_L1_error)
+          __Pyx_GOTREF(__pyx_t_15);
+          if (__pyx_t_7) {
+            __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_15, 0, __pyx_t_7); __pyx_t_7 = NULL;
+          }
+          __Pyx_INCREF(__pyx_v_fq1_name);
+          __Pyx_GIVEREF(__pyx_v_fq1_name);
+          PyTuple_SET_ITEM(__pyx_t_15, 0+__pyx_t_14, __pyx_v_fq1_name);
+          __Pyx_INCREF(__pyx_v_fq1_seq);
+          __Pyx_GIVEREF(__pyx_v_fq1_seq);
+          PyTuple_SET_ITEM(__pyx_t_15, 1+__pyx_t_14, __pyx_v_fq1_seq);
+          __Pyx_INCREF(__pyx_v_fq1_qual);
+          __Pyx_GIVEREF(__pyx_v_fq1_qual);
+          PyTuple_SET_ITEM(__pyx_t_15, 2+__pyx_t_14, __pyx_v_fq1_qual);
+          __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_15, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 39, __pyx_L1_error)
+          __Pyx_GOTREF(__pyx_t_6);
+          __Pyx_DECREF(__pyx_t_15); __pyx_t_15 = 0;
+        }
+        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+        __pyx_t_13 = __Pyx_PyObject_Append(__pyx_t_5, __pyx_t_6); if (unlikely(__pyx_t_13 == ((int)-1))) __PYX_ERR(0, 39, __pyx_L1_error)
+        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+
+        /* "FileWriter.pyx":40
+ *             if sample_index in data_dict:
+ *                 data_dict[sample_index]["R1"].append("@{}\n{}\n+\n{}\n".format(fq1_name, fq1_seq, fq1_qual))
+ *                 if sample_index is not "Unknown":             # <<<<<<<<<<<<<<
+ *                     data_dict[sample_index]["QC"][index_mismatch] += 1
+ *                 # data_dict[sample_index]["R1"].append("@{}\n{}\n+\n{}\n".format(fq1_name, fq1_seq, fq1_qual))
+ */
+        __pyx_t_11 = (__pyx_v_sample_index != __pyx_n_u_Unknown);
+        __pyx_t_9 = (__pyx_t_11 != 0);
+        if (__pyx_t_9) {
+
+          /* "FileWriter.pyx":41
+ *                 data_dict[sample_index]["R1"].append("@{}\n{}\n+\n{}\n".format(fq1_name, fq1_seq, fq1_qual))
+ *                 if sample_index is not "Unknown":
+ *                     data_dict[sample_index]["QC"][index_mismatch] += 1             # <<<<<<<<<<<<<<
+ *                 # data_dict[sample_index]["R1"].append("@{}\n{}\n+\n{}\n".format(fq1_name, fq1_seq, fq1_qual))
+ * 
+ */
+          __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_n_s_data_dict); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 41, __pyx_L1_error)
+          __Pyx_GOTREF(__pyx_t_6);
+          __pyx_t_5 = __Pyx_PyObject_GetItem(__pyx_t_6, __pyx_v_sample_index); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 41, __pyx_L1_error)
+          __Pyx_GOTREF(__pyx_t_5);
+          __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+          __pyx_t_6 = __Pyx_PyObject_Dict_GetItem(__pyx_t_5, __pyx_n_u_QC); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 41, __pyx_L1_error)
+          __Pyx_GOTREF(__pyx_t_6);
+          __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+          __Pyx_INCREF(__pyx_v_index_mismatch);
+          __pyx_t_5 = __pyx_v_index_mismatch;
+          __pyx_t_4 = __Pyx_PyObject_GetItem(__pyx_t_6, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 41, __pyx_L1_error)
+          __Pyx_GOTREF(__pyx_t_4);
+          __pyx_t_15 = __Pyx_PyInt_AddObjC(__pyx_t_4, __pyx_int_1, 1, 1, 0); if (unlikely(!__pyx_t_15)) __PYX_ERR(0, 41, __pyx_L1_error)
+          __Pyx_GOTREF(__pyx_t_15);
+          __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+          if (unlikely(PyObject_SetItem(__pyx_t_6, __pyx_t_5, __pyx_t_15) < 0)) __PYX_ERR(0, 41, __pyx_L1_error)
+          __Pyx_DECREF(__pyx_t_15); __pyx_t_15 = 0;
+          __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+          __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+
+          /* "FileWriter.pyx":40
+ *             if sample_index in data_dict:
+ *                 data_dict[sample_index]["R1"].append("@{}\n{}\n+\n{}\n".format(fq1_name, fq1_seq, fq1_qual))
+ *                 if sample_index is not "Unknown":             # <<<<<<<<<<<<<<
+ *                     data_dict[sample_index]["QC"][index_mismatch] += 1
+ *                 # data_dict[sample_index]["R1"].append("@{}\n{}\n+\n{}\n".format(fq1_name, fq1_seq, fq1_qual))
+ */
+        }
+
+        /* "FileWriter.pyx":38
+ * 
+ *         if not filtered:
+ *             if sample_index in data_dict:             # <<<<<<<<<<<<<<
+ *                 data_dict[sample_index]["R1"].append("@{}\n{}\n+\n{}\n".format(fq1_name, fq1_seq, fq1_qual))
+ *                 if sample_index is not "Unknown":
+ */
+        goto __pyx_L17;
+      }
+
+      /* "FileWriter.pyx":45
+ * 
+ *             else:
+ *                 data_dict[sample_index]["R1"] = ["@{}\n{}\n+\n{}\n".format(fq1_name, fq1_seq, fq1_qual)]             # <<<<<<<<<<<<<<
+ *                 data_dict[sample_index]["QC"] = [0, 0, 0]
+ *                 if sample_index is not "Unknown":
+ */
+      /*else*/ {
+        __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_kp_u__2, __pyx_n_s_format); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 45, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_5);
+        __pyx_t_15 = NULL;
+        __pyx_t_14 = 0;
+        if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_5))) {
+          __pyx_t_15 = PyMethod_GET_SELF(__pyx_t_5);
+          if (likely(__pyx_t_15)) {
+            PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
+            __Pyx_INCREF(__pyx_t_15);
+            __Pyx_INCREF(function);
+            __Pyx_DECREF_SET(__pyx_t_5, function);
+            __pyx_t_14 = 1;
+          }
+        }
+        #if CYTHON_FAST_PYCALL
+        if (PyFunction_Check(__pyx_t_5)) {
+          PyObject *__pyx_temp[4] = {__pyx_t_15, __pyx_v_fq1_name, __pyx_v_fq1_seq, __pyx_v_fq1_qual};
+          __pyx_t_6 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_14, 3+__pyx_t_14); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 45, __pyx_L1_error)
+          __Pyx_XDECREF(__pyx_t_15); __pyx_t_15 = 0;
+          __Pyx_GOTREF(__pyx_t_6);
+        } else
+        #endif
+        #if CYTHON_FAST_PYCCALL
+        if (__Pyx_PyFastCFunction_Check(__pyx_t_5)) {
+          PyObject *__pyx_temp[4] = {__pyx_t_15, __pyx_v_fq1_name, __pyx_v_fq1_seq, __pyx_v_fq1_qual};
+          __pyx_t_6 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_14, 3+__pyx_t_14); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 45, __pyx_L1_error)
+          __Pyx_XDECREF(__pyx_t_15); __pyx_t_15 = 0;
+          __Pyx_GOTREF(__pyx_t_6);
+        } else
+        #endif
+        {
+          __pyx_t_4 = PyTuple_New(3+__pyx_t_14); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 45, __pyx_L1_error)
+          __Pyx_GOTREF(__pyx_t_4);
+          if (__pyx_t_15) {
+            __Pyx_GIVEREF(__pyx_t_15); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_15); __pyx_t_15 = NULL;
+          }
+          __Pyx_INCREF(__pyx_v_fq1_name);
+          __Pyx_GIVEREF(__pyx_v_fq1_name);
+          PyTuple_SET_ITEM(__pyx_t_4, 0+__pyx_t_14, __pyx_v_fq1_name);
+          __Pyx_INCREF(__pyx_v_fq1_seq);
+          __Pyx_GIVEREF(__pyx_v_fq1_seq);
+          PyTuple_SET_ITEM(__pyx_t_4, 1+__pyx_t_14, __pyx_v_fq1_seq);
+          __Pyx_INCREF(__pyx_v_fq1_qual);
+          __Pyx_GIVEREF(__pyx_v_fq1_qual);
+          PyTuple_SET_ITEM(__pyx_t_4, 2+__pyx_t_14, __pyx_v_fq1_qual);
+          __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_4, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 45, __pyx_L1_error)
+          __Pyx_GOTREF(__pyx_t_6);
+          __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+        }
+        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+        __pyx_t_5 = PyList_New(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 45, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_5);
+        __Pyx_GIVEREF(__pyx_t_6);
+        PyList_SET_ITEM(__pyx_t_5, 0, __pyx_t_6);
+        __pyx_t_6 = 0;
+        __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_n_s_data_dict); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 45, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_6);
+        __pyx_t_4 = __Pyx_PyObject_GetItem(__pyx_t_6, __pyx_v_sample_index); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 45, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_4);
+        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+        if (unlikely(PyObject_SetItem(__pyx_t_4, __pyx_n_u_R1, __pyx_t_5) < 0)) __PYX_ERR(0, 45, __pyx_L1_error)
+        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+
+        /* "FileWriter.pyx":46
+ *             else:
+ *                 data_dict[sample_index]["R1"] = ["@{}\n{}\n+\n{}\n".format(fq1_name, fq1_seq, fq1_qual)]
+ *                 data_dict[sample_index]["QC"] = [0, 0, 0]             # <<<<<<<<<<<<<<
+ *                 if sample_index is not "Unknown":
+ *                     data_dict[sample_index]["QC"][index_mismatch] += 1
+ */
+        __pyx_t_5 = PyList_New(3); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 46, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_5);
+        __Pyx_INCREF(__pyx_int_0);
+        __Pyx_GIVEREF(__pyx_int_0);
+        PyList_SET_ITEM(__pyx_t_5, 0, __pyx_int_0);
+        __Pyx_INCREF(__pyx_int_0);
+        __Pyx_GIVEREF(__pyx_int_0);
+        PyList_SET_ITEM(__pyx_t_5, 1, __pyx_int_0);
+        __Pyx_INCREF(__pyx_int_0);
+        __Pyx_GIVEREF(__pyx_int_0);
+        PyList_SET_ITEM(__pyx_t_5, 2, __pyx_int_0);
+        __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_data_dict); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 46, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_4);
+        __pyx_t_6 = __Pyx_PyObject_GetItem(__pyx_t_4, __pyx_v_sample_index); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 46, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_6);
+        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+        if (unlikely(PyObject_SetItem(__pyx_t_6, __pyx_n_u_QC, __pyx_t_5) < 0)) __PYX_ERR(0, 46, __pyx_L1_error)
+        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+
+        /* "FileWriter.pyx":47
+ *                 data_dict[sample_index]["R1"] = ["@{}\n{}\n+\n{}\n".format(fq1_name, fq1_seq, fq1_qual)]
+ *                 data_dict[sample_index]["QC"] = [0, 0, 0]
+ *                 if sample_index is not "Unknown":             # <<<<<<<<<<<<<<
+ *                     data_dict[sample_index]["QC"][index_mismatch] += 1
+ * 
+ */
+        __pyx_t_9 = (__pyx_v_sample_index != __pyx_n_u_Unknown);
+        __pyx_t_11 = (__pyx_t_9 != 0);
+        if (__pyx_t_11) {
+
+          /* "FileWriter.pyx":48
+ *                 data_dict[sample_index]["QC"] = [0, 0, 0]
+ *                 if sample_index is not "Unknown":
+ *                     data_dict[sample_index]["QC"][index_mismatch] += 1             # <<<<<<<<<<<<<<
+ * 
+ *             # data_dict[sample_index]["R1"] = ["@{}\n{}\n+\n{}\n".format(fq1_name, fq1_seq, fq1_qual)]
+ */
+          __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_data_dict); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 48, __pyx_L1_error)
+          __Pyx_GOTREF(__pyx_t_5);
+          __pyx_t_6 = __Pyx_PyObject_GetItem(__pyx_t_5, __pyx_v_sample_index); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 48, __pyx_L1_error)
+          __Pyx_GOTREF(__pyx_t_6);
+          __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+          __pyx_t_5 = __Pyx_PyObject_Dict_GetItem(__pyx_t_6, __pyx_n_u_QC); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 48, __pyx_L1_error)
+          __Pyx_GOTREF(__pyx_t_5);
+          __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+          __Pyx_INCREF(__pyx_v_index_mismatch);
+          __pyx_t_6 = __pyx_v_index_mismatch;
+          __pyx_t_4 = __Pyx_PyObject_GetItem(__pyx_t_5, __pyx_t_6); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 48, __pyx_L1_error)
+          __Pyx_GOTREF(__pyx_t_4);
+          __pyx_t_15 = __Pyx_PyInt_AddObjC(__pyx_t_4, __pyx_int_1, 1, 1, 0); if (unlikely(!__pyx_t_15)) __PYX_ERR(0, 48, __pyx_L1_error)
+          __Pyx_GOTREF(__pyx_t_15);
+          __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+          if (unlikely(PyObject_SetItem(__pyx_t_5, __pyx_t_6, __pyx_t_15) < 0)) __PYX_ERR(0, 48, __pyx_L1_error)
+          __Pyx_DECREF(__pyx_t_15); __pyx_t_15 = 0;
+          __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+          __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+
+          /* "FileWriter.pyx":47
+ *                 data_dict[sample_index]["R1"] = ["@{}\n{}\n+\n{}\n".format(fq1_name, fq1_seq, fq1_qual)]
+ *                 data_dict[sample_index]["QC"] = [0, 0, 0]
+ *                 if sample_index is not "Unknown":             # <<<<<<<<<<<<<<
+ *                     data_dict[sample_index]["QC"][index_mismatch] += 1
+ * 
+ */
+        }
+      }
+      __pyx_L17:;
+
+      /* "FileWriter.pyx":37
+ *             filtered = True
+ * 
+ *         if not filtered:             # <<<<<<<<<<<<<<
+ *             if sample_index in data_dict:
+ *                 data_dict[sample_index]["R1"].append("@{}\n{}\n+\n{}\n".format(fq1_name, fq1_seq, fq1_qual))
+ */
     }
-    __pyx_L14:;
 
     /* "FileWriter.pyx":15
- * cpdef object file_writer(object self, list fq1_batch):
+ * cpdef object file_writer(object self, fq1_batch):
  * 
  *     for fq1_read in fq1_batch:             # <<<<<<<<<<<<<<
  *         fq1_name = fq1_read[0]
@@ -1957,15 +2215,15 @@ static PyObject *__pyx_f_10FileWriter_file_writer(PyObject *__pyx_v_self, PyObje
   }
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "FileWriter.pyx":40
- *             data_dict[sample_index]["R1"] = ["@{}\n{}\n+\n{}\n".format(fq1_name, fq1_seq, fq1_qual)]
+  /* "FileWriter.pyx":52
+ *             # data_dict[sample_index]["R1"] = ["@{}\n{}\n+\n{}\n".format(fq1_name, fq1_seq, fq1_qual)]
  * 
  *     return data_dict             # <<<<<<<<<<<<<<
  * 
  * 
  */
   __Pyx_XDECREF(__pyx_r);
-  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_data_dict); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 40, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_data_dict); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 52, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -1974,7 +2232,7 @@ static PyObject *__pyx_f_10FileWriter_file_writer(PyObject *__pyx_v_self, PyObje
   /* "FileWriter.pyx":13
  * data_dict = collections.defaultdict(lambda: collections.defaultdict(list))
  * 
- * cpdef object file_writer(object self, list fq1_batch):             # <<<<<<<<<<<<<<
+ * cpdef object file_writer(object self, fq1_batch):             # <<<<<<<<<<<<<<
  * 
  *     for fq1_read in fq1_batch:
  */
@@ -1982,19 +2240,21 @@ static PyObject *__pyx_f_10FileWriter_file_writer(PyObject *__pyx_v_self, PyObje
   /* function exit code */
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4);
   __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_XDECREF(__pyx_t_10);
-  __Pyx_XDECREF(__pyx_t_12);
+  __Pyx_XDECREF(__pyx_t_6);
+  __Pyx_XDECREF(__pyx_t_7);
+  __Pyx_XDECREF(__pyx_t_15);
   __Pyx_AddTraceback("FileWriter.file_writer", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = 0;
   __pyx_L0:;
   __Pyx_XDECREF(__pyx_v_fq1_read);
   __Pyx_XDECREF(__pyx_v_fq1_name);
   __Pyx_XDECREF(__pyx_v_fq1_seq);
+  __Pyx_XDECREF(__pyx_v_fq1_qual);
   __Pyx_XDECREF(__pyx_v_min_length);
   __Pyx_XDECREF(__pyx_v_sample_index);
+  __Pyx_XDECREF(__pyx_v_index_mismatch);
   __Pyx_XDECREF(__pyx_v_marker_read);
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
@@ -2048,7 +2308,7 @@ static PyObject *__pyx_pw_10FileWriter_1file_writer(PyObject *__pyx_self, PyObje
       values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
     }
     __pyx_v_self = values[0];
-    __pyx_v_fq1_batch = ((PyObject*)values[1]);
+    __pyx_v_fq1_batch = values[1];
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
@@ -2058,14 +2318,9 @@ static PyObject *__pyx_pw_10FileWriter_1file_writer(PyObject *__pyx_self, PyObje
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_fq1_batch), (&PyList_Type), 1, "fq1_batch", 1))) __PYX_ERR(0, 13, __pyx_L1_error)
   __pyx_r = __pyx_pf_10FileWriter_file_writer(__pyx_self, __pyx_v_self, __pyx_v_fq1_batch);
 
   /* function exit code */
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __pyx_r = NULL;
-  __pyx_L0:;
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
@@ -2096,7 +2351,7 @@ static PyObject *__pyx_pf_10FileWriter_file_writer(CYTHON_UNUSED PyObject *__pyx
   return __pyx_r;
 }
 
-/* "FileWriter.pyx":43
+/* "FileWriter.pyx":55
  * 
  * 
  * cdef umi_search(umi_anchor, seq):             # <<<<<<<<<<<<<<
@@ -2125,20 +2380,20 @@ static PyObject *__pyx_f_10FileWriter_umi_search(PyObject *__pyx_v_umi_anchor, P
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("umi_search", 0);
 
-  /* "FileWriter.pyx":44
+  /* "FileWriter.pyx":56
  * 
  * cdef umi_search(umi_anchor, seq):
  *     rt_pos = len(umi_anchor)             # <<<<<<<<<<<<<<
  *     lft_pos = 0
  *     umi = "No_UMI"
  */
-  __pyx_t_1 = PyObject_Length(__pyx_v_umi_anchor); if (unlikely(__pyx_t_1 == ((Py_ssize_t)-1))) __PYX_ERR(0, 44, __pyx_L1_error)
-  __pyx_t_2 = PyInt_FromSsize_t(__pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 44, __pyx_L1_error)
+  __pyx_t_1 = PyObject_Length(__pyx_v_umi_anchor); if (unlikely(__pyx_t_1 == ((Py_ssize_t)-1))) __PYX_ERR(0, 56, __pyx_L1_error)
+  __pyx_t_2 = PyInt_FromSsize_t(__pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 56, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_v_rt_pos = __pyx_t_2;
   __pyx_t_2 = 0;
 
-  /* "FileWriter.pyx":45
+  /* "FileWriter.pyx":57
  * cdef umi_search(umi_anchor, seq):
  *     rt_pos = len(umi_anchor)
  *     lft_pos = 0             # <<<<<<<<<<<<<<
@@ -2148,7 +2403,7 @@ static PyObject *__pyx_f_10FileWriter_umi_search(PyObject *__pyx_v_umi_anchor, P
   __Pyx_INCREF(__pyx_int_0);
   __pyx_v_lft_pos = __pyx_int_0;
 
-  /* "FileWriter.pyx":46
+  /* "FileWriter.pyx":58
  *     rt_pos = len(umi_anchor)
  *     lft_pos = 0
  *     umi = "No_UMI"             # <<<<<<<<<<<<<<
@@ -2158,7 +2413,7 @@ static PyObject *__pyx_f_10FileWriter_umi_search(PyObject *__pyx_v_umi_anchor, P
   __Pyx_INCREF(__pyx_n_u_No_UMI);
   __pyx_v_umi = __pyx_n_u_No_UMI;
 
-  /* "FileWriter.pyx":48
+  /* "FileWriter.pyx":60
  *     umi = "No_UMI"
  * 
  *     while rt_pos < 26:             # <<<<<<<<<<<<<<
@@ -2166,31 +2421,31 @@ static PyObject *__pyx_f_10FileWriter_umi_search(PyObject *__pyx_v_umi_anchor, P
  *         query_mismatch = distance(query, umi_anchor)
  */
   while (1) {
-    __pyx_t_2 = PyObject_RichCompare(__pyx_v_rt_pos, __pyx_int_26, Py_LT); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 48, __pyx_L1_error)
-    __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 48, __pyx_L1_error)
+    __pyx_t_2 = PyObject_RichCompare(__pyx_v_rt_pos, __pyx_int_26, Py_LT); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 60, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 60, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     if (!__pyx_t_3) break;
 
-    /* "FileWriter.pyx":49
+    /* "FileWriter.pyx":61
  * 
  *     while rt_pos < 26:
  *         query = seq[lft_pos:rt_pos]             # <<<<<<<<<<<<<<
  *         query_mismatch = distance(query, umi_anchor)
  *         tmp_mismatch = ""
  */
-    __pyx_t_2 = __Pyx_PyObject_GetSlice(__pyx_v_seq, 0, 0, &__pyx_v_lft_pos, &__pyx_v_rt_pos, NULL, 0, 0, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 49, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetSlice(__pyx_v_seq, 0, 0, &__pyx_v_lft_pos, &__pyx_v_rt_pos, NULL, 0, 0, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 61, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_XDECREF_SET(__pyx_v_query, __pyx_t_2);
     __pyx_t_2 = 0;
 
-    /* "FileWriter.pyx":50
+    /* "FileWriter.pyx":62
  *     while rt_pos < 26:
  *         query = seq[lft_pos:rt_pos]
  *         query_mismatch = distance(query, umi_anchor)             # <<<<<<<<<<<<<<
  *         tmp_mismatch = ""
  *         if query_mismatch <= 1:
  */
-    __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_distance); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 50, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_distance); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 62, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __pyx_t_5 = NULL;
     __pyx_t_6 = 0;
@@ -2207,7 +2462,7 @@ static PyObject *__pyx_f_10FileWriter_umi_search(PyObject *__pyx_v_umi_anchor, P
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_4)) {
       PyObject *__pyx_temp[3] = {__pyx_t_5, __pyx_v_query, __pyx_v_umi_anchor};
-      __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-__pyx_t_6, 2+__pyx_t_6); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 50, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-__pyx_t_6, 2+__pyx_t_6); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 62, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_GOTREF(__pyx_t_2);
     } else
@@ -2215,13 +2470,13 @@ static PyObject *__pyx_f_10FileWriter_umi_search(PyObject *__pyx_v_umi_anchor, P
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_4)) {
       PyObject *__pyx_temp[3] = {__pyx_t_5, __pyx_v_query, __pyx_v_umi_anchor};
-      __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-__pyx_t_6, 2+__pyx_t_6); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 50, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-__pyx_t_6, 2+__pyx_t_6); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 62, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_GOTREF(__pyx_t_2);
     } else
     #endif
     {
-      __pyx_t_7 = PyTuple_New(2+__pyx_t_6); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 50, __pyx_L1_error)
+      __pyx_t_7 = PyTuple_New(2+__pyx_t_6); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 62, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_7);
       if (__pyx_t_5) {
         __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_5); __pyx_t_5 = NULL;
@@ -2232,7 +2487,7 @@ static PyObject *__pyx_f_10FileWriter_umi_search(PyObject *__pyx_v_umi_anchor, P
       __Pyx_INCREF(__pyx_v_umi_anchor);
       __Pyx_GIVEREF(__pyx_v_umi_anchor);
       PyTuple_SET_ITEM(__pyx_t_7, 1+__pyx_t_6, __pyx_v_umi_anchor);
-      __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_7, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 50, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_7, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 62, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     }
@@ -2240,7 +2495,7 @@ static PyObject *__pyx_f_10FileWriter_umi_search(PyObject *__pyx_v_umi_anchor, P
     __Pyx_XDECREF_SET(__pyx_v_query_mismatch, __pyx_t_2);
     __pyx_t_2 = 0;
 
-    /* "FileWriter.pyx":51
+    /* "FileWriter.pyx":63
  *         query = seq[lft_pos:rt_pos]
  *         query_mismatch = distance(query, umi_anchor)
  *         tmp_mismatch = ""             # <<<<<<<<<<<<<<
@@ -2250,50 +2505,50 @@ static PyObject *__pyx_f_10FileWriter_umi_search(PyObject *__pyx_v_umi_anchor, P
     __Pyx_INCREF(__pyx_kp_u_);
     __Pyx_XDECREF_SET(__pyx_v_tmp_mismatch, __pyx_kp_u_);
 
-    /* "FileWriter.pyx":52
+    /* "FileWriter.pyx":64
  *         query_mismatch = distance(query, umi_anchor)
  *         tmp_mismatch = ""
  *         if query_mismatch <= 1:             # <<<<<<<<<<<<<<
  *             umi = seq[lft_pos+2:rt_pos+2]
  *             if query_mismatch == 0:
  */
-    __pyx_t_2 = PyObject_RichCompare(__pyx_v_query_mismatch, __pyx_int_1, Py_LE); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 52, __pyx_L1_error)
-    __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 52, __pyx_L1_error)
+    __pyx_t_2 = PyObject_RichCompare(__pyx_v_query_mismatch, __pyx_int_1, Py_LE); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 64, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 64, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     if (__pyx_t_3) {
 
-      /* "FileWriter.pyx":53
+      /* "FileWriter.pyx":65
  *         tmp_mismatch = ""
  *         if query_mismatch <= 1:
  *             umi = seq[lft_pos+2:rt_pos+2]             # <<<<<<<<<<<<<<
  *             if query_mismatch == 0:
  *                 return umi, rt_pos+2
  */
-      __pyx_t_2 = __Pyx_PyInt_AddObjC(__pyx_v_lft_pos, __pyx_int_2, 2, 0, 0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 53, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyInt_AddObjC(__pyx_v_lft_pos, __pyx_int_2, 2, 0, 0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 65, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
-      __pyx_t_4 = __Pyx_PyInt_AddObjC(__pyx_v_rt_pos, __pyx_int_2, 2, 0, 0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 53, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyInt_AddObjC(__pyx_v_rt_pos, __pyx_int_2, 2, 0, 0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 65, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
-      __pyx_t_7 = __Pyx_PyObject_GetSlice(__pyx_v_seq, 0, 0, &__pyx_t_2, &__pyx_t_4, NULL, 0, 0, 1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 53, __pyx_L1_error)
+      __pyx_t_7 = __Pyx_PyObject_GetSlice(__pyx_v_seq, 0, 0, &__pyx_t_2, &__pyx_t_4, NULL, 0, 0, 1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 65, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_7);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_DECREF_SET(__pyx_v_umi, __pyx_t_7);
       __pyx_t_7 = 0;
 
-      /* "FileWriter.pyx":54
+      /* "FileWriter.pyx":66
  *         if query_mismatch <= 1:
  *             umi = seq[lft_pos+2:rt_pos+2]
  *             if query_mismatch == 0:             # <<<<<<<<<<<<<<
  *                 return umi, rt_pos+2
  *             else:
  */
-      __pyx_t_7 = __Pyx_PyInt_EqObjC(__pyx_v_query_mismatch, __pyx_int_0, 0, 0); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 54, __pyx_L1_error)
+      __pyx_t_7 = __Pyx_PyInt_EqObjC(__pyx_v_query_mismatch, __pyx_int_0, 0, 0); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 66, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_7);
-      __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_7); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 54, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_7); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 66, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
       if (__pyx_t_3) {
 
-        /* "FileWriter.pyx":55
+        /* "FileWriter.pyx":67
  *             umi = seq[lft_pos+2:rt_pos+2]
  *             if query_mismatch == 0:
  *                 return umi, rt_pos+2             # <<<<<<<<<<<<<<
@@ -2301,9 +2556,9 @@ static PyObject *__pyx_f_10FileWriter_umi_search(PyObject *__pyx_v_umi_anchor, P
  *                 tmp_mismatch = query_mismatch
  */
         __Pyx_XDECREF(__pyx_r);
-        __pyx_t_7 = __Pyx_PyInt_AddObjC(__pyx_v_rt_pos, __pyx_int_2, 2, 0, 0); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 55, __pyx_L1_error)
+        __pyx_t_7 = __Pyx_PyInt_AddObjC(__pyx_v_rt_pos, __pyx_int_2, 2, 0, 0); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 67, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_7);
-        __pyx_t_4 = PyTuple_New(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 55, __pyx_L1_error)
+        __pyx_t_4 = PyTuple_New(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 67, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_INCREF(__pyx_v_umi);
         __Pyx_GIVEREF(__pyx_v_umi);
@@ -2315,7 +2570,7 @@ static PyObject *__pyx_f_10FileWriter_umi_search(PyObject *__pyx_v_umi_anchor, P
         __pyx_t_4 = 0;
         goto __pyx_L0;
 
-        /* "FileWriter.pyx":54
+        /* "FileWriter.pyx":66
  *         if query_mismatch <= 1:
  *             umi = seq[lft_pos+2:rt_pos+2]
  *             if query_mismatch == 0:             # <<<<<<<<<<<<<<
@@ -2324,7 +2579,7 @@ static PyObject *__pyx_f_10FileWriter_umi_search(PyObject *__pyx_v_umi_anchor, P
  */
       }
 
-      /* "FileWriter.pyx":57
+      /* "FileWriter.pyx":69
  *                 return umi, rt_pos+2
  *             else:
  *                 tmp_mismatch = query_mismatch             # <<<<<<<<<<<<<<
@@ -2336,7 +2591,7 @@ static PyObject *__pyx_f_10FileWriter_umi_search(PyObject *__pyx_v_umi_anchor, P
         __Pyx_DECREF_SET(__pyx_v_tmp_mismatch, __pyx_v_query_mismatch);
       }
 
-      /* "FileWriter.pyx":52
+      /* "FileWriter.pyx":64
  *         query_mismatch = distance(query, umi_anchor)
  *         tmp_mismatch = ""
  *         if query_mismatch <= 1:             # <<<<<<<<<<<<<<
@@ -2345,32 +2600,32 @@ static PyObject *__pyx_f_10FileWriter_umi_search(PyObject *__pyx_v_umi_anchor, P
  */
     }
 
-    /* "FileWriter.pyx":58
+    /* "FileWriter.pyx":70
  *             else:
  *                 tmp_mismatch = query_mismatch
  *         lft_pos += 1             # <<<<<<<<<<<<<<
  *         rt_pos += 1
  * 
  */
-    __pyx_t_4 = __Pyx_PyInt_AddObjC(__pyx_v_lft_pos, __pyx_int_1, 1, 1, 0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 58, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyInt_AddObjC(__pyx_v_lft_pos, __pyx_int_1, 1, 1, 0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 70, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF_SET(__pyx_v_lft_pos, __pyx_t_4);
     __pyx_t_4 = 0;
 
-    /* "FileWriter.pyx":59
+    /* "FileWriter.pyx":71
  *                 tmp_mismatch = query_mismatch
  *         lft_pos += 1
  *         rt_pos += 1             # <<<<<<<<<<<<<<
  * 
  *     return umi, rt_pos+1
  */
-    __pyx_t_4 = __Pyx_PyInt_AddObjC(__pyx_v_rt_pos, __pyx_int_1, 1, 1, 0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 59, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyInt_AddObjC(__pyx_v_rt_pos, __pyx_int_1, 1, 1, 0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 71, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF_SET(__pyx_v_rt_pos, __pyx_t_4);
     __pyx_t_4 = 0;
   }
 
-  /* "FileWriter.pyx":61
+  /* "FileWriter.pyx":73
  *         rt_pos += 1
  * 
  *     return umi, rt_pos+1             # <<<<<<<<<<<<<<
@@ -2378,9 +2633,9 @@ static PyObject *__pyx_f_10FileWriter_umi_search(PyObject *__pyx_v_umi_anchor, P
  * 
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_4 = __Pyx_PyInt_AddObjC(__pyx_v_rt_pos, __pyx_int_1, 1, 0, 0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 61, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyInt_AddObjC(__pyx_v_rt_pos, __pyx_int_1, 1, 0, 0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 73, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_7 = PyTuple_New(2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 61, __pyx_L1_error)
+  __pyx_t_7 = PyTuple_New(2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 73, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   __Pyx_INCREF(__pyx_v_umi);
   __Pyx_GIVEREF(__pyx_v_umi);
@@ -2392,7 +2647,7 @@ static PyObject *__pyx_f_10FileWriter_umi_search(PyObject *__pyx_v_umi_anchor, P
   __pyx_t_7 = 0;
   goto __pyx_L0;
 
-  /* "FileWriter.pyx":43
+  /* "FileWriter.pyx":55
  * 
  * 
  * cdef umi_search(umi_anchor, seq):             # <<<<<<<<<<<<<<
@@ -2420,7 +2675,7 @@ static PyObject *__pyx_f_10FileWriter_umi_search(PyObject *__pyx_v_umi_anchor, P
   return __pyx_r;
 }
 
-/* "FileWriter.pyx":65
+/* "FileWriter.pyx":77
  * 
  * cdef index_search(master_index_dict, fastq_name, temp_dict):
  *     def match_maker(query, unknown):             # <<<<<<<<<<<<<<
@@ -2464,11 +2719,11 @@ static PyObject *__pyx_pw_10FileWriter_12index_search_1match_maker(PyObject *__p
         case  1:
         if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_unknown)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("match_maker", 1, 2, 2, 1); __PYX_ERR(0, 65, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("match_maker", 1, 2, 2, 1); __PYX_ERR(0, 77, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "match_maker") < 0)) __PYX_ERR(0, 65, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "match_maker") < 0)) __PYX_ERR(0, 77, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 2) {
       goto __pyx_L5_argtuple_error;
@@ -2481,7 +2736,7 @@ static PyObject *__pyx_pw_10FileWriter_12index_search_1match_maker(PyObject *__p
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("match_maker", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 65, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("match_maker", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 77, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("FileWriter.index_search.match_maker", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -2511,14 +2766,14 @@ static PyObject *__pyx_pf_10FileWriter_12index_search_match_maker(CYTHON_UNUSED 
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("match_maker", 0);
 
-  /* "FileWriter.pyx":72
+  /* "FileWriter.pyx":84
  *         :return:
  *         """
  *         query_mismatch = distance(query, unknown)             # <<<<<<<<<<<<<<
  * 
  *         # Unknown length can be longer than target length.  Need to adjust mismatch index to reflect this.
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_distance); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 72, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_distance); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 84, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_3 = NULL;
   __pyx_t_4 = 0;
@@ -2535,7 +2790,7 @@ static PyObject *__pyx_pf_10FileWriter_12index_search_match_maker(CYTHON_UNUSED 
   #if CYTHON_FAST_PYCALL
   if (PyFunction_Check(__pyx_t_2)) {
     PyObject *__pyx_temp[3] = {__pyx_t_3, __pyx_v_query, __pyx_v_unknown};
-    __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 72, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 84, __pyx_L1_error)
     __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_GOTREF(__pyx_t_1);
   } else
@@ -2543,13 +2798,13 @@ static PyObject *__pyx_pf_10FileWriter_12index_search_match_maker(CYTHON_UNUSED 
   #if CYTHON_FAST_PYCCALL
   if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
     PyObject *__pyx_temp[3] = {__pyx_t_3, __pyx_v_query, __pyx_v_unknown};
-    __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 72, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 84, __pyx_L1_error)
     __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_GOTREF(__pyx_t_1);
   } else
   #endif
   {
-    __pyx_t_5 = PyTuple_New(2+__pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 72, __pyx_L1_error)
+    __pyx_t_5 = PyTuple_New(2+__pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 84, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     if (__pyx_t_3) {
       __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_3); __pyx_t_3 = NULL;
@@ -2560,7 +2815,7 @@ static PyObject *__pyx_pf_10FileWriter_12index_search_match_maker(CYTHON_UNUSED 
     __Pyx_INCREF(__pyx_v_unknown);
     __Pyx_GIVEREF(__pyx_v_unknown);
     PyTuple_SET_ITEM(__pyx_t_5, 1+__pyx_t_4, __pyx_v_unknown);
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 72, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 84, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   }
@@ -2568,24 +2823,24 @@ static PyObject *__pyx_pf_10FileWriter_12index_search_match_maker(CYTHON_UNUSED 
   __pyx_v_query_mismatch = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "FileWriter.pyx":75
+  /* "FileWriter.pyx":87
  * 
  *         # Unknown length can be longer than target length.  Need to adjust mismatch index to reflect this.
  *         adjusted_query_mismatch = query_mismatch - (len(unknown) - len(query))             # <<<<<<<<<<<<<<
  * 
  *         return adjusted_query_mismatch
  */
-  __pyx_t_6 = PyObject_Length(__pyx_v_unknown); if (unlikely(__pyx_t_6 == ((Py_ssize_t)-1))) __PYX_ERR(0, 75, __pyx_L1_error)
-  __pyx_t_7 = PyObject_Length(__pyx_v_query); if (unlikely(__pyx_t_7 == ((Py_ssize_t)-1))) __PYX_ERR(0, 75, __pyx_L1_error)
-  __pyx_t_1 = PyInt_FromSsize_t((__pyx_t_6 - __pyx_t_7)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 75, __pyx_L1_error)
+  __pyx_t_6 = PyObject_Length(__pyx_v_unknown); if (unlikely(__pyx_t_6 == ((Py_ssize_t)-1))) __PYX_ERR(0, 87, __pyx_L1_error)
+  __pyx_t_7 = PyObject_Length(__pyx_v_query); if (unlikely(__pyx_t_7 == ((Py_ssize_t)-1))) __PYX_ERR(0, 87, __pyx_L1_error)
+  __pyx_t_1 = PyInt_FromSsize_t((__pyx_t_6 - __pyx_t_7)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 87, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PyNumber_Subtract(__pyx_v_query_mismatch, __pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 75, __pyx_L1_error)
+  __pyx_t_2 = PyNumber_Subtract(__pyx_v_query_mismatch, __pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 87, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_adjusted_query_mismatch = __pyx_t_2;
   __pyx_t_2 = 0;
 
-  /* "FileWriter.pyx":77
+  /* "FileWriter.pyx":89
  *         adjusted_query_mismatch = query_mismatch - (len(unknown) - len(query))
  * 
  *         return adjusted_query_mismatch             # <<<<<<<<<<<<<<
@@ -2597,7 +2852,7 @@ static PyObject *__pyx_pf_10FileWriter_12index_search_match_maker(CYTHON_UNUSED 
   __pyx_r = __pyx_v_adjusted_query_mismatch;
   goto __pyx_L0;
 
-  /* "FileWriter.pyx":65
+  /* "FileWriter.pyx":77
  * 
  * cdef index_search(master_index_dict, fastq_name, temp_dict):
  *     def match_maker(query, unknown):             # <<<<<<<<<<<<<<
@@ -2621,7 +2876,7 @@ static PyObject *__pyx_pf_10FileWriter_12index_search_match_maker(CYTHON_UNUSED 
   return __pyx_r;
 }
 
-/* "FileWriter.pyx":64
+/* "FileWriter.pyx":76
  * 
  * 
  * cdef index_search(master_index_dict, fastq_name, temp_dict):             # <<<<<<<<<<<<<<
@@ -2653,26 +2908,26 @@ static PyObject *__pyx_f_10FileWriter_index_search(PyObject *__pyx_v_master_inde
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("index_search", 0);
 
-  /* "FileWriter.pyx":65
+  /* "FileWriter.pyx":77
  * 
  * cdef index_search(master_index_dict, fastq_name, temp_dict):
  *     def match_maker(query, unknown):             # <<<<<<<<<<<<<<
  *         """
  *         This little ditty gives us some wiggle room in identifying our indices and any other small targets.
  */
-  __pyx_t_1 = __Pyx_CyFunction_New(&__pyx_mdef_10FileWriter_12index_search_1match_maker, 0, __pyx_n_s_index_search_locals_match_maker, NULL, __pyx_n_s_FileWriter, __pyx_d, ((PyObject *)__pyx_codeobj__4)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 65, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_CyFunction_New(&__pyx_mdef_10FileWriter_12index_search_1match_maker, 0, __pyx_n_s_index_search_locals_match_maker, NULL, __pyx_n_s_FileWriter, __pyx_d, ((PyObject *)__pyx_codeobj__4)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 77, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_v_match_maker = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "FileWriter.pyx":79
+  /* "FileWriter.pyx":91
  *         return adjusted_query_mismatch
  * 
  *     left_query = fastq_name.split(":")[-1].split("+")[0]             # <<<<<<<<<<<<<<
  *     right_query = fastq_name.split(":")[-1].split("+")[1]
  * 
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_fastq_name, __pyx_n_s_split); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 79, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_fastq_name, __pyx_n_s_split); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 91, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __pyx_t_4 = NULL;
   if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_3))) {
@@ -2686,13 +2941,13 @@ static PyObject *__pyx_f_10FileWriter_index_search(PyObject *__pyx_v_master_inde
   }
   __pyx_t_2 = (__pyx_t_4) ? __Pyx_PyObject_Call2Args(__pyx_t_3, __pyx_t_4, __pyx_kp_u__5) : __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_kp_u__5);
   __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 79, __pyx_L1_error)
+  if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 91, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_GetItemInt(__pyx_t_2, -1L, long, 1, __Pyx_PyInt_From_long, 0, 1, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 79, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_GetItemInt(__pyx_t_2, -1L, long, 1, __Pyx_PyInt_From_long, 0, 1, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 91, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_split); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 79, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_split); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 91, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_t_3 = NULL;
@@ -2707,23 +2962,23 @@ static PyObject *__pyx_f_10FileWriter_index_search(PyObject *__pyx_v_master_inde
   }
   __pyx_t_1 = (__pyx_t_3) ? __Pyx_PyObject_Call2Args(__pyx_t_2, __pyx_t_3, __pyx_kp_u__6) : __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_kp_u__6);
   __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 79, __pyx_L1_error)
+  if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 91, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_GetItemInt(__pyx_t_1, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 79, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetItemInt(__pyx_t_1, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 91, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_left_query = __pyx_t_2;
   __pyx_t_2 = 0;
 
-  /* "FileWriter.pyx":80
+  /* "FileWriter.pyx":92
  * 
  *     left_query = fastq_name.split(":")[-1].split("+")[0]
  *     right_query = fastq_name.split(":")[-1].split("+")[1]             # <<<<<<<<<<<<<<
  * 
  *     # An iSeq100 can give this error.  Speeds up processing.
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_fastq_name, __pyx_n_s_split); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 80, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_fastq_name, __pyx_n_s_split); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 92, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __pyx_t_4 = NULL;
   if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_3))) {
@@ -2737,13 +2992,13 @@ static PyObject *__pyx_f_10FileWriter_index_search(PyObject *__pyx_v_master_inde
   }
   __pyx_t_1 = (__pyx_t_4) ? __Pyx_PyObject_Call2Args(__pyx_t_3, __pyx_t_4, __pyx_kp_u__5) : __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_kp_u__5);
   __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 80, __pyx_L1_error)
+  if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 92, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_GetItemInt(__pyx_t_1, -1L, long, 1, __Pyx_PyInt_From_long, 0, 1, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 80, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_GetItemInt(__pyx_t_1, -1L, long, 1, __Pyx_PyInt_From_long, 0, 1, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 92, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_split); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 80, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_split); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 92, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_t_3 = NULL;
@@ -2758,56 +3013,56 @@ static PyObject *__pyx_f_10FileWriter_index_search(PyObject *__pyx_v_master_inde
   }
   __pyx_t_2 = (__pyx_t_3) ? __Pyx_PyObject_Call2Args(__pyx_t_1, __pyx_t_3, __pyx_kp_u__6) : __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_kp_u__6);
   __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 80, __pyx_L1_error)
+  if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 92, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_GetItemInt(__pyx_t_2, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 80, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetItemInt(__pyx_t_2, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 92, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_v_right_query = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "FileWriter.pyx":83
+  /* "FileWriter.pyx":95
  * 
  *     # An iSeq100 can give this error.  Speeds up processing.
  *     if left_query == "TTTTTTTT" or right_query == "TTTTTTTT":             # <<<<<<<<<<<<<<
- *         return "Unknown"
+ *         return "Unknown", ""
  * 
  */
-  __pyx_t_6 = (__Pyx_PyUnicode_Equals(__pyx_v_left_query, __pyx_n_u_TTTTTTTT, Py_EQ)); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 83, __pyx_L1_error)
+  __pyx_t_6 = (__Pyx_PyUnicode_Equals(__pyx_v_left_query, __pyx_n_u_TTTTTTTT, Py_EQ)); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 95, __pyx_L1_error)
   if (!__pyx_t_6) {
   } else {
     __pyx_t_5 = __pyx_t_6;
     goto __pyx_L4_bool_binop_done;
   }
-  __pyx_t_6 = (__Pyx_PyUnicode_Equals(__pyx_v_right_query, __pyx_n_u_TTTTTTTT, Py_EQ)); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 83, __pyx_L1_error)
+  __pyx_t_6 = (__Pyx_PyUnicode_Equals(__pyx_v_right_query, __pyx_n_u_TTTTTTTT, Py_EQ)); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 95, __pyx_L1_error)
   __pyx_t_5 = __pyx_t_6;
   __pyx_L4_bool_binop_done:;
   if (__pyx_t_5) {
 
-    /* "FileWriter.pyx":84
+    /* "FileWriter.pyx":96
  *     # An iSeq100 can give this error.  Speeds up processing.
  *     if left_query == "TTTTTTTT" or right_query == "TTTTTTTT":
- *         return "Unknown"             # <<<<<<<<<<<<<<
+ *         return "Unknown", ""             # <<<<<<<<<<<<<<
  * 
  *     for index_key in master_index_dict:
  */
     __Pyx_XDECREF(__pyx_r);
-    __Pyx_INCREF(__pyx_n_u_Unknown);
-    __pyx_r = __pyx_n_u_Unknown;
+    __Pyx_INCREF(__pyx_tuple__7);
+    __pyx_r = __pyx_tuple__7;
     goto __pyx_L0;
 
-    /* "FileWriter.pyx":83
+    /* "FileWriter.pyx":95
  * 
  *     # An iSeq100 can give this error.  Speeds up processing.
  *     if left_query == "TTTTTTTT" or right_query == "TTTTTTTT":             # <<<<<<<<<<<<<<
- *         return "Unknown"
+ *         return "Unknown", ""
  * 
  */
   }
 
-  /* "FileWriter.pyx":86
- *         return "Unknown"
+  /* "FileWriter.pyx":98
+ *         return "Unknown", ""
  * 
  *     for index_key in master_index_dict:             # <<<<<<<<<<<<<<
  *         left_index = master_index_dict[index_key][0]
@@ -2817,26 +3072,26 @@ static PyObject *__pyx_f_10FileWriter_index_search(PyObject *__pyx_v_master_inde
     __pyx_t_1 = __pyx_v_master_index_dict; __Pyx_INCREF(__pyx_t_1); __pyx_t_7 = 0;
     __pyx_t_8 = NULL;
   } else {
-    __pyx_t_7 = -1; __pyx_t_1 = PyObject_GetIter(__pyx_v_master_index_dict); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 86, __pyx_L1_error)
+    __pyx_t_7 = -1; __pyx_t_1 = PyObject_GetIter(__pyx_v_master_index_dict); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 98, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_8 = Py_TYPE(__pyx_t_1)->tp_iternext; if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 86, __pyx_L1_error)
+    __pyx_t_8 = Py_TYPE(__pyx_t_1)->tp_iternext; if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 98, __pyx_L1_error)
   }
   for (;;) {
     if (likely(!__pyx_t_8)) {
       if (likely(PyList_CheckExact(__pyx_t_1))) {
         if (__pyx_t_7 >= PyList_GET_SIZE(__pyx_t_1)) break;
         #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-        __pyx_t_2 = PyList_GET_ITEM(__pyx_t_1, __pyx_t_7); __Pyx_INCREF(__pyx_t_2); __pyx_t_7++; if (unlikely(0 < 0)) __PYX_ERR(0, 86, __pyx_L1_error)
+        __pyx_t_2 = PyList_GET_ITEM(__pyx_t_1, __pyx_t_7); __Pyx_INCREF(__pyx_t_2); __pyx_t_7++; if (unlikely(0 < 0)) __PYX_ERR(0, 98, __pyx_L1_error)
         #else
-        __pyx_t_2 = PySequence_ITEM(__pyx_t_1, __pyx_t_7); __pyx_t_7++; if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 86, __pyx_L1_error)
+        __pyx_t_2 = PySequence_ITEM(__pyx_t_1, __pyx_t_7); __pyx_t_7++; if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 98, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         #endif
       } else {
         if (__pyx_t_7 >= PyTuple_GET_SIZE(__pyx_t_1)) break;
         #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-        __pyx_t_2 = PyTuple_GET_ITEM(__pyx_t_1, __pyx_t_7); __Pyx_INCREF(__pyx_t_2); __pyx_t_7++; if (unlikely(0 < 0)) __PYX_ERR(0, 86, __pyx_L1_error)
+        __pyx_t_2 = PyTuple_GET_ITEM(__pyx_t_1, __pyx_t_7); __Pyx_INCREF(__pyx_t_2); __pyx_t_7++; if (unlikely(0 < 0)) __PYX_ERR(0, 98, __pyx_L1_error)
         #else
-        __pyx_t_2 = PySequence_ITEM(__pyx_t_1, __pyx_t_7); __pyx_t_7++; if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 86, __pyx_L1_error)
+        __pyx_t_2 = PySequence_ITEM(__pyx_t_1, __pyx_t_7); __pyx_t_7++; if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 98, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         #endif
       }
@@ -2846,7 +3101,7 @@ static PyObject *__pyx_f_10FileWriter_index_search(PyObject *__pyx_v_master_inde
         PyObject* exc_type = PyErr_Occurred();
         if (exc_type) {
           if (likely(__Pyx_PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
-          else __PYX_ERR(0, 86, __pyx_L1_error)
+          else __PYX_ERR(0, 98, __pyx_L1_error)
         }
         break;
       }
@@ -2855,128 +3110,136 @@ static PyObject *__pyx_f_10FileWriter_index_search(PyObject *__pyx_v_master_inde
     __Pyx_XDECREF_SET(__pyx_v_index_key, __pyx_t_2);
     __pyx_t_2 = 0;
 
-    /* "FileWriter.pyx":87
+    /* "FileWriter.pyx":99
  * 
  *     for index_key in master_index_dict:
  *         left_index = master_index_dict[index_key][0]             # <<<<<<<<<<<<<<
  *         right_index = master_index_dict[index_key][1]
  * 
  */
-    __pyx_t_2 = __Pyx_PyObject_GetItem(__pyx_v_master_index_dict, __pyx_v_index_key); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 87, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetItem(__pyx_v_master_index_dict, __pyx_v_index_key); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 99, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_3 = __Pyx_GetItemInt(__pyx_t_2, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 87, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_GetItemInt(__pyx_t_2, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 99, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_XDECREF_SET(__pyx_v_left_index, __pyx_t_3);
     __pyx_t_3 = 0;
 
-    /* "FileWriter.pyx":88
+    /* "FileWriter.pyx":100
  *     for index_key in master_index_dict:
  *         left_index = master_index_dict[index_key][0]
  *         right_index = master_index_dict[index_key][1]             # <<<<<<<<<<<<<<
  * 
  *         left_match = match_maker(left_index, left_query)
  */
-    __pyx_t_3 = __Pyx_PyObject_GetItem(__pyx_v_master_index_dict, __pyx_v_index_key); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 88, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetItem(__pyx_v_master_index_dict, __pyx_v_index_key); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 100, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_2 = __Pyx_GetItemInt(__pyx_t_3, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 88, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_GetItemInt(__pyx_t_3, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 100, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_XDECREF_SET(__pyx_v_right_index, __pyx_t_2);
     __pyx_t_2 = 0;
 
-    /* "FileWriter.pyx":90
+    /* "FileWriter.pyx":102
  *         right_index = master_index_dict[index_key][1]
  * 
  *         left_match = match_maker(left_index, left_query)             # <<<<<<<<<<<<<<
  *         right_match = match_maker(right_index, right_query)
  * 
  */
-    __pyx_t_2 = __pyx_pf_10FileWriter_12index_search_match_maker(__pyx_v_match_maker, __pyx_v_left_index, __pyx_v_left_query); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 90, __pyx_L1_error)
+    __pyx_t_2 = __pyx_pf_10FileWriter_12index_search_match_maker(__pyx_v_match_maker, __pyx_v_left_index, __pyx_v_left_query); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 102, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_XDECREF_SET(__pyx_v_left_match, __pyx_t_2);
     __pyx_t_2 = 0;
 
-    /* "FileWriter.pyx":91
+    /* "FileWriter.pyx":103
  * 
  *         left_match = match_maker(left_index, left_query)
  *         right_match = match_maker(right_index, right_query)             # <<<<<<<<<<<<<<
  * 
  *         if left_match == 0 == right_match:
  */
-    __pyx_t_2 = __pyx_pf_10FileWriter_12index_search_match_maker(__pyx_v_match_maker, __pyx_v_right_index, __pyx_v_right_query); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 91, __pyx_L1_error)
+    __pyx_t_2 = __pyx_pf_10FileWriter_12index_search_match_maker(__pyx_v_match_maker, __pyx_v_right_index, __pyx_v_right_query); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 103, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_XDECREF_SET(__pyx_v_right_match, __pyx_t_2);
     __pyx_t_2 = 0;
 
-    /* "FileWriter.pyx":93
+    /* "FileWriter.pyx":105
  *         right_match = match_maker(right_index, right_query)
  * 
  *         if left_match == 0 == right_match:             # <<<<<<<<<<<<<<
- *             return index_key
+ *             return index_key, 0
  *         elif left_match <= 1 and right_match <= 1:
  */
-    __pyx_t_2 = PyObject_RichCompare(__pyx_v_left_match, __pyx_int_0, Py_EQ); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 93, __pyx_L1_error)
+    __pyx_t_2 = PyObject_RichCompare(__pyx_v_left_match, __pyx_int_0, Py_EQ); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 105, __pyx_L1_error)
     if (__Pyx_PyObject_IsTrue(__pyx_t_2)) {
       __Pyx_DECREF(__pyx_t_2);
-      __pyx_t_2 = PyObject_RichCompare(__pyx_int_0, __pyx_v_right_match, Py_EQ); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 93, __pyx_L1_error)
+      __pyx_t_2 = PyObject_RichCompare(__pyx_int_0, __pyx_v_right_match, Py_EQ); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 105, __pyx_L1_error)
     }
-    __pyx_t_5 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(0, 93, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(0, 105, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     if (__pyx_t_5) {
 
-      /* "FileWriter.pyx":94
+      /* "FileWriter.pyx":106
  * 
  *         if left_match == 0 == right_match:
- *             return index_key             # <<<<<<<<<<<<<<
+ *             return index_key, 0             # <<<<<<<<<<<<<<
  *         elif left_match <= 1 and right_match <= 1:
  *             temp_dict[left_match, right_match] = index_key
  */
       __Pyx_XDECREF(__pyx_r);
+      __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 106, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_2);
       __Pyx_INCREF(__pyx_v_index_key);
-      __pyx_r = __pyx_v_index_key;
+      __Pyx_GIVEREF(__pyx_v_index_key);
+      PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_v_index_key);
+      __Pyx_INCREF(__pyx_int_0);
+      __Pyx_GIVEREF(__pyx_int_0);
+      PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_int_0);
+      __pyx_r = __pyx_t_2;
+      __pyx_t_2 = 0;
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
       goto __pyx_L0;
 
-      /* "FileWriter.pyx":93
+      /* "FileWriter.pyx":105
  *         right_match = match_maker(right_index, right_query)
  * 
  *         if left_match == 0 == right_match:             # <<<<<<<<<<<<<<
- *             return index_key
+ *             return index_key, 0
  *         elif left_match <= 1 and right_match <= 1:
  */
     }
 
-    /* "FileWriter.pyx":95
+    /* "FileWriter.pyx":107
  *         if left_match == 0 == right_match:
- *             return index_key
+ *             return index_key, 0
  *         elif left_match <= 1 and right_match <= 1:             # <<<<<<<<<<<<<<
  *             temp_dict[left_match, right_match] = index_key
  * 
  */
-    __pyx_t_2 = PyObject_RichCompare(__pyx_v_left_match, __pyx_int_1, Py_LE); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 95, __pyx_L1_error)
-    __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 95, __pyx_L1_error)
+    __pyx_t_2 = PyObject_RichCompare(__pyx_v_left_match, __pyx_int_1, Py_LE); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 107, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 107, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     if (__pyx_t_6) {
     } else {
       __pyx_t_5 = __pyx_t_6;
       goto __pyx_L9_bool_binop_done;
     }
-    __pyx_t_2 = PyObject_RichCompare(__pyx_v_right_match, __pyx_int_1, Py_LE); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 95, __pyx_L1_error)
-    __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 95, __pyx_L1_error)
+    __pyx_t_2 = PyObject_RichCompare(__pyx_v_right_match, __pyx_int_1, Py_LE); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 107, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 107, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __pyx_t_5 = __pyx_t_6;
     __pyx_L9_bool_binop_done:;
     if (__pyx_t_5) {
 
-      /* "FileWriter.pyx":96
- *             return index_key
+      /* "FileWriter.pyx":108
+ *             return index_key, 0
  *         elif left_match <= 1 and right_match <= 1:
  *             temp_dict[left_match, right_match] = index_key             # <<<<<<<<<<<<<<
  * 
  *     if temp_dict:
  */
-      __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 96, __pyx_L1_error)
+      __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 108, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_INCREF(__pyx_v_left_match);
       __Pyx_GIVEREF(__pyx_v_left_match);
@@ -2984,20 +3247,20 @@ static PyObject *__pyx_f_10FileWriter_index_search(PyObject *__pyx_v_master_inde
       __Pyx_INCREF(__pyx_v_right_match);
       __Pyx_GIVEREF(__pyx_v_right_match);
       PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_v_right_match);
-      if (unlikely(PyObject_SetItem(__pyx_v_temp_dict, __pyx_t_2, __pyx_v_index_key) < 0)) __PYX_ERR(0, 96, __pyx_L1_error)
+      if (unlikely(PyObject_SetItem(__pyx_v_temp_dict, __pyx_t_2, __pyx_v_index_key) < 0)) __PYX_ERR(0, 108, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-      /* "FileWriter.pyx":95
+      /* "FileWriter.pyx":107
  *         if left_match == 0 == right_match:
- *             return index_key
+ *             return index_key, 0
  *         elif left_match <= 1 and right_match <= 1:             # <<<<<<<<<<<<<<
  *             temp_dict[left_match, right_match] = index_key
  * 
  */
     }
 
-    /* "FileWriter.pyx":86
- *         return "Unknown"
+    /* "FileWriter.pyx":98
+ *         return "Unknown", ""
  * 
  *     for index_key in master_index_dict:             # <<<<<<<<<<<<<<
  *         left_index = master_index_dict[index_key][0]
@@ -3006,26 +3269,26 @@ static PyObject *__pyx_f_10FileWriter_index_search(PyObject *__pyx_v_master_inde
   }
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "FileWriter.pyx":98
+  /* "FileWriter.pyx":110
  *             temp_dict[left_match, right_match] = index_key
  * 
  *     if temp_dict:             # <<<<<<<<<<<<<<
  *         natsort.natsorted(temp_dict)
- *         return next(iter(temp_dict.values()))
+ *         return next(iter(temp_dict.values())), 1
  */
-  __pyx_t_5 = __Pyx_PyObject_IsTrue(__pyx_v_temp_dict); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(0, 98, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_IsTrue(__pyx_v_temp_dict); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(0, 110, __pyx_L1_error)
   if (__pyx_t_5) {
 
-    /* "FileWriter.pyx":99
+    /* "FileWriter.pyx":111
  * 
  *     if temp_dict:
  *         natsort.natsorted(temp_dict)             # <<<<<<<<<<<<<<
- *         return next(iter(temp_dict.values()))
+ *         return next(iter(temp_dict.values())), 1
  * 
  */
-    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_natsort); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 99, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_natsort); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 111, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_natsorted); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 99, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_natsorted); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 111, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __pyx_t_2 = NULL;
@@ -3040,20 +3303,20 @@ static PyObject *__pyx_f_10FileWriter_index_search(PyObject *__pyx_v_master_inde
     }
     __pyx_t_1 = (__pyx_t_2) ? __Pyx_PyObject_Call2Args(__pyx_t_3, __pyx_t_2, __pyx_v_temp_dict) : __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_temp_dict);
     __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 99, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 111, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "FileWriter.pyx":100
+    /* "FileWriter.pyx":112
  *     if temp_dict:
  *         natsort.natsorted(temp_dict)
- *         return next(iter(temp_dict.values()))             # <<<<<<<<<<<<<<
+ *         return next(iter(temp_dict.values())), 1             # <<<<<<<<<<<<<<
  * 
  *     else:
  */
     __Pyx_XDECREF(__pyx_r);
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_temp_dict, __pyx_n_s_values); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 100, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_temp_dict, __pyx_n_s_values); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 112, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __pyx_t_2 = NULL;
     if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_3))) {
@@ -3067,41 +3330,49 @@ static PyObject *__pyx_f_10FileWriter_index_search(PyObject *__pyx_v_master_inde
     }
     __pyx_t_1 = (__pyx_t_2) ? __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_2) : __Pyx_PyObject_CallNoArg(__pyx_t_3);
     __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 100, __pyx_L1_error)
+    if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 112, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = PyObject_GetIter(__pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 100, __pyx_L1_error)
+    __pyx_t_3 = PyObject_GetIter(__pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 112, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __pyx_t_1 = __Pyx_PyIter_Next(__pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 100, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyIter_Next(__pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 112, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_r = __pyx_t_1;
+    __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 112, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __Pyx_GIVEREF(__pyx_t_1);
+    PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1);
+    __Pyx_INCREF(__pyx_int_1);
+    __Pyx_GIVEREF(__pyx_int_1);
+    PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_int_1);
     __pyx_t_1 = 0;
+    __pyx_r = __pyx_t_3;
+    __pyx_t_3 = 0;
     goto __pyx_L0;
 
-    /* "FileWriter.pyx":98
+    /* "FileWriter.pyx":110
  *             temp_dict[left_match, right_match] = index_key
  * 
  *     if temp_dict:             # <<<<<<<<<<<<<<
  *         natsort.natsorted(temp_dict)
- *         return next(iter(temp_dict.values()))
+ *         return next(iter(temp_dict.values())), 1
  */
   }
 
-  /* "FileWriter.pyx":103
+  /* "FileWriter.pyx":115
  * 
  *     else:
- *         return "Unknown"             # <<<<<<<<<<<<<<
+ *         return "Unknown", ""             # <<<<<<<<<<<<<<
  */
   /*else*/ {
     __Pyx_XDECREF(__pyx_r);
-    __Pyx_INCREF(__pyx_n_u_Unknown);
-    __pyx_r = __pyx_n_u_Unknown;
+    __Pyx_INCREF(__pyx_tuple__7);
+    __pyx_r = __pyx_tuple__7;
     goto __pyx_L0;
   }
 
-  /* "FileWriter.pyx":64
+  /* "FileWriter.pyx":76
  * 
  * 
  * cdef index_search(master_index_dict, fastq_name, temp_dict):             # <<<<<<<<<<<<<<
@@ -3181,17 +3452,17 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_kp_u_, __pyx_k_, sizeof(__pyx_k_), 0, 1, 0, 0},
   {&__pyx_n_s_FileWriter, __pyx_k_FileWriter, sizeof(__pyx_k_FileWriter), 0, 0, 1, 1},
   {&__pyx_kp_s_FileWriter_pyx, __pyx_k_FileWriter_pyx, sizeof(__pyx_k_FileWriter_pyx), 0, 0, 1, 0},
+  {&__pyx_n_u_Filtered, __pyx_k_Filtered, sizeof(__pyx_k_Filtered), 0, 1, 0, 1},
   {&__pyx_n_u_GhostIndex, __pyx_k_GhostIndex, sizeof(__pyx_k_GhostIndex), 0, 1, 0, 1},
   {&__pyx_n_s_Levenshtein, __pyx_k_Levenshtein, sizeof(__pyx_k_Levenshtein), 0, 0, 1, 1},
   {&__pyx_n_s_MinimumReadLength, __pyx_k_MinimumReadLength, sizeof(__pyx_k_MinimumReadLength), 0, 0, 1, 1},
   {&__pyx_n_u_N, __pyx_k_N, sizeof(__pyx_k_N), 0, 1, 0, 1},
   {&__pyx_n_s_N_Limit, __pyx_k_N_Limit, sizeof(__pyx_k_N_Limit), 0, 0, 1, 1},
   {&__pyx_n_u_No_UMI, __pyx_k_No_UMI, sizeof(__pyx_k_No_UMI), 0, 1, 0, 1},
+  {&__pyx_n_u_QC, __pyx_k_QC, sizeof(__pyx_k_QC), 0, 1, 0, 1},
   {&__pyx_n_u_R1, __pyx_k_R1, sizeof(__pyx_k_R1), 0, 1, 0, 1},
-  {&__pyx_n_s_Sequence_Magic, __pyx_k_Sequence_Magic, sizeof(__pyx_k_Sequence_Magic), 0, 0, 1, 1},
   {&__pyx_n_u_TTTTTTTT, __pyx_k_TTTTTTTT, sizeof(__pyx_k_TTTTTTTT), 0, 1, 0, 1},
   {&__pyx_n_u_Unknown, __pyx_k_Unknown, sizeof(__pyx_k_Unknown), 0, 1, 0, 1},
-  {&__pyx_n_s_Valkyries, __pyx_k_Valkyries, sizeof(__pyx_k_Valkyries), 0, 0, 1, 1},
   {&__pyx_kp_u__2, __pyx_k__2, sizeof(__pyx_k__2), 0, 1, 0, 0},
   {&__pyx_kp_u__5, __pyx_k__5, sizeof(__pyx_k__5), 0, 1, 0, 0},
   {&__pyx_kp_u__6, __pyx_k__6, sizeof(__pyx_k__6), 0, 1, 0, 0},
@@ -3233,17 +3504,28 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__Pyx_InitCachedConstants", 0);
 
-  /* "FileWriter.pyx":65
+  /* "FileWriter.pyx":77
  * 
  * cdef index_search(master_index_dict, fastq_name, temp_dict):
  *     def match_maker(query, unknown):             # <<<<<<<<<<<<<<
  *         """
  *         This little ditty gives us some wiggle room in identifying our indices and any other small targets.
  */
-  __pyx_tuple__3 = PyTuple_Pack(4, __pyx_n_s_query, __pyx_n_s_unknown, __pyx_n_s_query_mismatch, __pyx_n_s_adjusted_query_mismatch); if (unlikely(!__pyx_tuple__3)) __PYX_ERR(0, 65, __pyx_L1_error)
+  __pyx_tuple__3 = PyTuple_Pack(4, __pyx_n_s_query, __pyx_n_s_unknown, __pyx_n_s_query_mismatch, __pyx_n_s_adjusted_query_mismatch); if (unlikely(!__pyx_tuple__3)) __PYX_ERR(0, 77, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__3);
   __Pyx_GIVEREF(__pyx_tuple__3);
-  __pyx_codeobj__4 = (PyObject*)__Pyx_PyCode_New(2, 0, 4, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__3, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_FileWriter_pyx, __pyx_n_s_match_maker, 65, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__4)) __PYX_ERR(0, 65, __pyx_L1_error)
+  __pyx_codeobj__4 = (PyObject*)__Pyx_PyCode_New(2, 0, 4, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__3, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_FileWriter_pyx, __pyx_n_s_match_maker, 77, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__4)) __PYX_ERR(0, 77, __pyx_L1_error)
+
+  /* "FileWriter.pyx":96
+ *     # An iSeq100 can give this error.  Speeds up processing.
+ *     if left_query == "TTTTTTTT" or right_query == "TTTTTTTT":
+ *         return "Unknown", ""             # <<<<<<<<<<<<<<
+ * 
+ *     for index_key in master_index_dict:
+ */
+  __pyx_tuple__7 = PyTuple_Pack(2, __pyx_n_u_Unknown, __pyx_kp_u_); if (unlikely(!__pyx_tuple__7)) __PYX_ERR(0, 96, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__7);
+  __Pyx_GIVEREF(__pyx_tuple__7);
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
@@ -3275,7 +3557,6 @@ static int __Pyx_modinit_global_init_code(void) {
   __Pyx_RefNannySetupContext("__Pyx_modinit_global_init_code", 0);
   /*--- Global init code ---*/
   __pyx_v_10FileWriter_temp_dict = ((PyObject*)Py_None); Py_INCREF(Py_None);
-  __pyx_v_10FileWriter_fq1_qual = ((PyObject*)Py_None); Py_INCREF(Py_None);
   __Pyx_RefNannyFinishContext();
   return 0;
 }
@@ -3547,7 +3828,7 @@ if (!__Pyx_RefNanny) {
  * import collections
  * from Levenshtein import distance             # <<<<<<<<<<<<<<
  * from natsort import natsort
- * from Valkyries import Sequence_Magic
+ * 
  */
   __pyx_t_1 = PyList_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 5, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
@@ -3567,8 +3848,8 @@ if (!__Pyx_RefNanny) {
  * import collections
  * from Levenshtein import distance
  * from natsort import natsort             # <<<<<<<<<<<<<<
- * from Valkyries import Sequence_Magic
  * 
+ * cdef dict temp_dict = {}
  */
   __pyx_t_2 = PyList_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 6, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
@@ -3584,59 +3865,38 @@ if (!__Pyx_RefNanny) {
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "FileWriter.pyx":7
- * from Levenshtein import distance
+  /* "FileWriter.pyx":8
  * from natsort import natsort
- * from Valkyries import Sequence_Magic             # <<<<<<<<<<<<<<
- * 
- * cdef dict temp_dict = {}
- */
-  __pyx_t_1 = PyList_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 7, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_INCREF(__pyx_n_s_Sequence_Magic);
-  __Pyx_GIVEREF(__pyx_n_s_Sequence_Magic);
-  PyList_SET_ITEM(__pyx_t_1, 0, __pyx_n_s_Sequence_Magic);
-  __pyx_t_2 = __Pyx_Import(__pyx_n_s_Valkyries, __pyx_t_1, 0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 7, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_Sequence_Magic); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 7, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_Sequence_Magic, __pyx_t_1) < 0) __PYX_ERR(0, 7, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-
-  /* "FileWriter.pyx":9
- * from Valkyries import Sequence_Magic
  * 
  * cdef dict temp_dict = {}             # <<<<<<<<<<<<<<
  * cdef str fq1_name, fq1_seq, fq1_qual, marker_read, umi_fq, umi_anchor
- * data_dict = collections.defaultdict(lambda: collections.defaultdict(list))
+ * # data_dict = {}
  */
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 9, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_1 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 8, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
   __Pyx_XGOTREF(__pyx_v_10FileWriter_temp_dict);
-  __Pyx_DECREF_SET(__pyx_v_10FileWriter_temp_dict, ((PyObject*)__pyx_t_2));
-  __Pyx_GIVEREF(__pyx_t_2);
-  __pyx_t_2 = 0;
+  __Pyx_DECREF_SET(__pyx_v_10FileWriter_temp_dict, ((PyObject*)__pyx_t_1));
+  __Pyx_GIVEREF(__pyx_t_1);
+  __pyx_t_1 = 0;
 
   /* "FileWriter.pyx":11
- * cdef dict temp_dict = {}
  * cdef str fq1_name, fq1_seq, fq1_qual, marker_read, umi_fq, umi_anchor
+ * # data_dict = {}
  * data_dict = collections.defaultdict(lambda: collections.defaultdict(list))             # <<<<<<<<<<<<<<
  * 
- * cpdef object file_writer(object self, list fq1_batch):
+ * cpdef object file_writer(object self, fq1_batch):
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_collections); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 11, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_defaultdict); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 11, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_collections); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 11, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_10FileWriter_2lambda, 0, __pyx_n_s_lambda, NULL, __pyx_n_s_FileWriter, __pyx_d, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 11, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_defaultdict); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 11, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 11, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_t_1 = __Pyx_CyFunction_New(&__pyx_mdef_10FileWriter_2lambda, 0, __pyx_n_s_lambda, NULL, __pyx_n_s_FileWriter, __pyx_d, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 11, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 11, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_data_dict, __pyx_t_3) < 0) __PYX_ERR(0, 11, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
@@ -4121,6 +4381,66 @@ static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Fast(PyObject *o, Py_ssize_t i, 
     return __Pyx_GetItemInt_Generic(o, PyInt_FromSsize_t(i));
 }
 
+/* RaiseTooManyValuesToUnpack */
+static CYTHON_INLINE void __Pyx_RaiseTooManyValuesError(Py_ssize_t expected) {
+    PyErr_Format(PyExc_ValueError,
+                 "too many values to unpack (expected %" CYTHON_FORMAT_SSIZE_T "d)", expected);
+}
+
+/* RaiseNeedMoreValuesToUnpack */
+static CYTHON_INLINE void __Pyx_RaiseNeedMoreValuesError(Py_ssize_t index) {
+    PyErr_Format(PyExc_ValueError,
+                 "need more than %" CYTHON_FORMAT_SSIZE_T "d value%.1s to unpack",
+                 index, (index == 1) ? "" : "s");
+}
+
+/* IterFinish */
+static CYTHON_INLINE int __Pyx_IterFinish(void) {
+#if CYTHON_FAST_THREAD_STATE
+    PyThreadState *tstate = __Pyx_PyThreadState_Current;
+    PyObject* exc_type = tstate->curexc_type;
+    if (unlikely(exc_type)) {
+        if (likely(__Pyx_PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) {
+            PyObject *exc_value, *exc_tb;
+            exc_value = tstate->curexc_value;
+            exc_tb = tstate->curexc_traceback;
+            tstate->curexc_type = 0;
+            tstate->curexc_value = 0;
+            tstate->curexc_traceback = 0;
+            Py_DECREF(exc_type);
+            Py_XDECREF(exc_value);
+            Py_XDECREF(exc_tb);
+            return 0;
+        } else {
+            return -1;
+        }
+    }
+    return 0;
+#else
+    if (unlikely(PyErr_Occurred())) {
+        if (likely(PyErr_ExceptionMatches(PyExc_StopIteration))) {
+            PyErr_Clear();
+            return 0;
+        } else {
+            return -1;
+        }
+    }
+    return 0;
+#endif
+}
+
+/* UnpackItemEndCheck */
+static int __Pyx_IternextUnpackEndCheck(PyObject *retval, Py_ssize_t expected) {
+    if (unlikely(retval)) {
+        Py_DECREF(retval);
+        __Pyx_RaiseTooManyValuesError(expected);
+        return -1;
+    } else {
+        return __Pyx_IterFinish();
+    }
+    return 0;
+}
+
 /* ObjectGetItem */
 #if CYTHON_USE_TYPE_SLOTS
 static PyObject *__Pyx_PyObject_GetIndex(PyObject *obj, PyObject* index) {
@@ -4450,6 +4770,130 @@ static PyObject *__Pyx_PyDict_GetItem(PyObject *d, PyObject* key) {
 }
 #endif
 
+/* PyIntBinop */
+#if !CYTHON_COMPILING_IN_PYPY
+static PyObject* __Pyx_PyInt_AddObjC(PyObject *op1, PyObject *op2, CYTHON_UNUSED long intval, int inplace, int zerodivision_check) {
+    (void)inplace;
+    (void)zerodivision_check;
+    #if PY_MAJOR_VERSION < 3
+    if (likely(PyInt_CheckExact(op1))) {
+        const long b = intval;
+        long x;
+        long a = PyInt_AS_LONG(op1);
+            x = (long)((unsigned long)a + b);
+            if (likely((x^a) >= 0 || (x^b) >= 0))
+                return PyInt_FromLong(x);
+            return PyLong_Type.tp_as_number->nb_add(op1, op2);
+    }
+    #endif
+    #if CYTHON_USE_PYLONG_INTERNALS
+    if (likely(PyLong_CheckExact(op1))) {
+        const long b = intval;
+        long a, x;
+#ifdef HAVE_LONG_LONG
+        const PY_LONG_LONG llb = intval;
+        PY_LONG_LONG lla, llx;
+#endif
+        const digit* digits = ((PyLongObject*)op1)->ob_digit;
+        const Py_ssize_t size = Py_SIZE(op1);
+        if (likely(__Pyx_sst_abs(size) <= 1)) {
+            a = likely(size) ? digits[0] : 0;
+            if (size == -1) a = -a;
+        } else {
+            switch (size) {
+                case -2:
+                    if (8 * sizeof(long) - 1 > 2 * PyLong_SHIFT) {
+                        a = -(long) (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0]));
+                        break;
+#ifdef HAVE_LONG_LONG
+                    } else if (8 * sizeof(PY_LONG_LONG) - 1 > 2 * PyLong_SHIFT) {
+                        lla = -(PY_LONG_LONG) (((((unsigned PY_LONG_LONG)digits[1]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[0]));
+                        goto long_long;
+#endif
+                    }
+                    CYTHON_FALLTHROUGH;
+                case 2:
+                    if (8 * sizeof(long) - 1 > 2 * PyLong_SHIFT) {
+                        a = (long) (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0]));
+                        break;
+#ifdef HAVE_LONG_LONG
+                    } else if (8 * sizeof(PY_LONG_LONG) - 1 > 2 * PyLong_SHIFT) {
+                        lla = (PY_LONG_LONG) (((((unsigned PY_LONG_LONG)digits[1]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[0]));
+                        goto long_long;
+#endif
+                    }
+                    CYTHON_FALLTHROUGH;
+                case -3:
+                    if (8 * sizeof(long) - 1 > 3 * PyLong_SHIFT) {
+                        a = -(long) (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0]));
+                        break;
+#ifdef HAVE_LONG_LONG
+                    } else if (8 * sizeof(PY_LONG_LONG) - 1 > 3 * PyLong_SHIFT) {
+                        lla = -(PY_LONG_LONG) (((((((unsigned PY_LONG_LONG)digits[2]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[1]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[0]));
+                        goto long_long;
+#endif
+                    }
+                    CYTHON_FALLTHROUGH;
+                case 3:
+                    if (8 * sizeof(long) - 1 > 3 * PyLong_SHIFT) {
+                        a = (long) (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0]));
+                        break;
+#ifdef HAVE_LONG_LONG
+                    } else if (8 * sizeof(PY_LONG_LONG) - 1 > 3 * PyLong_SHIFT) {
+                        lla = (PY_LONG_LONG) (((((((unsigned PY_LONG_LONG)digits[2]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[1]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[0]));
+                        goto long_long;
+#endif
+                    }
+                    CYTHON_FALLTHROUGH;
+                case -4:
+                    if (8 * sizeof(long) - 1 > 4 * PyLong_SHIFT) {
+                        a = -(long) (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0]));
+                        break;
+#ifdef HAVE_LONG_LONG
+                    } else if (8 * sizeof(PY_LONG_LONG) - 1 > 4 * PyLong_SHIFT) {
+                        lla = -(PY_LONG_LONG) (((((((((unsigned PY_LONG_LONG)digits[3]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[2]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[1]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[0]));
+                        goto long_long;
+#endif
+                    }
+                    CYTHON_FALLTHROUGH;
+                case 4:
+                    if (8 * sizeof(long) - 1 > 4 * PyLong_SHIFT) {
+                        a = (long) (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0]));
+                        break;
+#ifdef HAVE_LONG_LONG
+                    } else if (8 * sizeof(PY_LONG_LONG) - 1 > 4 * PyLong_SHIFT) {
+                        lla = (PY_LONG_LONG) (((((((((unsigned PY_LONG_LONG)digits[3]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[2]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[1]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[0]));
+                        goto long_long;
+#endif
+                    }
+                    CYTHON_FALLTHROUGH;
+                default: return PyLong_Type.tp_as_number->nb_add(op1, op2);
+            }
+        }
+                x = a + b;
+            return PyLong_FromLong(x);
+#ifdef HAVE_LONG_LONG
+        long_long:
+                llx = lla + llb;
+            return PyLong_FromLongLong(llx);
+#endif
+        
+        
+    }
+    #endif
+    if (PyFloat_CheckExact(op1)) {
+        const long b = intval;
+        double a = PyFloat_AS_DOUBLE(op1);
+            double result;
+            PyFPE_START_PROTECT("add", return NULL)
+            result = ((double)a) + (double)b;
+            PyFPE_END_PROTECT(result)
+            return PyFloat_FromDouble(result);
+    }
+    return (inplace ? PyNumber_InPlaceAdd : PyNumber_Add)(op1, op2);
+}
+#endif
+
 /* RaiseArgTupleInvalid */
 static void __Pyx_RaiseArgtupleInvalid(
     const char* func_name,
@@ -4592,27 +5036,6 @@ bad:
     return -1;
 }
 
-/* ArgTypeTest */
-static int __Pyx__ArgTypeTest(PyObject *obj, PyTypeObject *type, const char *name, int exact)
-{
-    if (unlikely(!type)) {
-        PyErr_SetString(PyExc_SystemError, "Missing type object");
-        return 0;
-    }
-    else if (exact) {
-        #if PY_MAJOR_VERSION == 2
-        if ((type == &PyBaseString_Type) && likely(__Pyx_PyBaseString_CheckExact(obj))) return 1;
-        #endif
-    }
-    else {
-        if (likely(__Pyx_TypeCheck(obj, type))) return 1;
-    }
-    PyErr_Format(PyExc_TypeError,
-        "Argument '%.200s' has incorrect type (expected %.200s, got %.200s)",
-        name, type->tp_name, Py_TYPE(obj)->tp_name);
-    return 0;
-}
-
 /* SliceObject */
 static CYTHON_INLINE PyObject* __Pyx_PyObject_GetSlice(PyObject* obj,
         Py_ssize_t cstart, Py_ssize_t cstop,
@@ -4709,130 +5132,6 @@ static CYTHON_INLINE PyObject* __Pyx_PyObject_GetSlice(PyObject* obj,
 bad:
     return NULL;
 }
-
-/* PyIntBinop */
-#if !CYTHON_COMPILING_IN_PYPY
-static PyObject* __Pyx_PyInt_AddObjC(PyObject *op1, PyObject *op2, CYTHON_UNUSED long intval, int inplace, int zerodivision_check) {
-    (void)inplace;
-    (void)zerodivision_check;
-    #if PY_MAJOR_VERSION < 3
-    if (likely(PyInt_CheckExact(op1))) {
-        const long b = intval;
-        long x;
-        long a = PyInt_AS_LONG(op1);
-            x = (long)((unsigned long)a + b);
-            if (likely((x^a) >= 0 || (x^b) >= 0))
-                return PyInt_FromLong(x);
-            return PyLong_Type.tp_as_number->nb_add(op1, op2);
-    }
-    #endif
-    #if CYTHON_USE_PYLONG_INTERNALS
-    if (likely(PyLong_CheckExact(op1))) {
-        const long b = intval;
-        long a, x;
-#ifdef HAVE_LONG_LONG
-        const PY_LONG_LONG llb = intval;
-        PY_LONG_LONG lla, llx;
-#endif
-        const digit* digits = ((PyLongObject*)op1)->ob_digit;
-        const Py_ssize_t size = Py_SIZE(op1);
-        if (likely(__Pyx_sst_abs(size) <= 1)) {
-            a = likely(size) ? digits[0] : 0;
-            if (size == -1) a = -a;
-        } else {
-            switch (size) {
-                case -2:
-                    if (8 * sizeof(long) - 1 > 2 * PyLong_SHIFT) {
-                        a = -(long) (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0]));
-                        break;
-#ifdef HAVE_LONG_LONG
-                    } else if (8 * sizeof(PY_LONG_LONG) - 1 > 2 * PyLong_SHIFT) {
-                        lla = -(PY_LONG_LONG) (((((unsigned PY_LONG_LONG)digits[1]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[0]));
-                        goto long_long;
-#endif
-                    }
-                    CYTHON_FALLTHROUGH;
-                case 2:
-                    if (8 * sizeof(long) - 1 > 2 * PyLong_SHIFT) {
-                        a = (long) (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0]));
-                        break;
-#ifdef HAVE_LONG_LONG
-                    } else if (8 * sizeof(PY_LONG_LONG) - 1 > 2 * PyLong_SHIFT) {
-                        lla = (PY_LONG_LONG) (((((unsigned PY_LONG_LONG)digits[1]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[0]));
-                        goto long_long;
-#endif
-                    }
-                    CYTHON_FALLTHROUGH;
-                case -3:
-                    if (8 * sizeof(long) - 1 > 3 * PyLong_SHIFT) {
-                        a = -(long) (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0]));
-                        break;
-#ifdef HAVE_LONG_LONG
-                    } else if (8 * sizeof(PY_LONG_LONG) - 1 > 3 * PyLong_SHIFT) {
-                        lla = -(PY_LONG_LONG) (((((((unsigned PY_LONG_LONG)digits[2]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[1]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[0]));
-                        goto long_long;
-#endif
-                    }
-                    CYTHON_FALLTHROUGH;
-                case 3:
-                    if (8 * sizeof(long) - 1 > 3 * PyLong_SHIFT) {
-                        a = (long) (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0]));
-                        break;
-#ifdef HAVE_LONG_LONG
-                    } else if (8 * sizeof(PY_LONG_LONG) - 1 > 3 * PyLong_SHIFT) {
-                        lla = (PY_LONG_LONG) (((((((unsigned PY_LONG_LONG)digits[2]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[1]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[0]));
-                        goto long_long;
-#endif
-                    }
-                    CYTHON_FALLTHROUGH;
-                case -4:
-                    if (8 * sizeof(long) - 1 > 4 * PyLong_SHIFT) {
-                        a = -(long) (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0]));
-                        break;
-#ifdef HAVE_LONG_LONG
-                    } else if (8 * sizeof(PY_LONG_LONG) - 1 > 4 * PyLong_SHIFT) {
-                        lla = -(PY_LONG_LONG) (((((((((unsigned PY_LONG_LONG)digits[3]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[2]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[1]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[0]));
-                        goto long_long;
-#endif
-                    }
-                    CYTHON_FALLTHROUGH;
-                case 4:
-                    if (8 * sizeof(long) - 1 > 4 * PyLong_SHIFT) {
-                        a = (long) (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0]));
-                        break;
-#ifdef HAVE_LONG_LONG
-                    } else if (8 * sizeof(PY_LONG_LONG) - 1 > 4 * PyLong_SHIFT) {
-                        lla = (PY_LONG_LONG) (((((((((unsigned PY_LONG_LONG)digits[3]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[2]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[1]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[0]));
-                        goto long_long;
-#endif
-                    }
-                    CYTHON_FALLTHROUGH;
-                default: return PyLong_Type.tp_as_number->nb_add(op1, op2);
-            }
-        }
-                x = a + b;
-            return PyLong_FromLong(x);
-#ifdef HAVE_LONG_LONG
-        long_long:
-                llx = lla + llb;
-            return PyLong_FromLongLong(llx);
-#endif
-        
-        
-    }
-    #endif
-    if (PyFloat_CheckExact(op1)) {
-        const long b = intval;
-        double a = PyFloat_AS_DOUBLE(op1);
-            double result;
-            PyFPE_START_PROTECT("add", return NULL)
-            result = ((double)a) + (double)b;
-            PyFPE_END_PROTECT(result)
-            return PyFloat_FromDouble(result);
-    }
-    return (inplace ? PyNumber_InPlaceAdd : PyNumber_Add)(op1, op2);
-}
-#endif
 
 /* PyIntCompare */
 static CYTHON_INLINE PyObject* __Pyx_PyInt_EqObjC(PyObject *op1, PyObject *op2, CYTHON_UNUSED long intval, CYTHON_UNUSED long inplace) {
