@@ -135,7 +135,9 @@ def compress_files(file):
         print("{0} not found.".format(file))
 
 
-def file_merge(sample_index, args, log, sample_data_dict, worker_list):
+def file_merge(sample_index, file_merge_parameters):
+
+    args, log, sample_data_dict, worker_list = file_merge_parameters
     indexed_count = 0
     for worker_id in worker_list:
         try:
