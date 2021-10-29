@@ -32,8 +32,7 @@ import numpy
 from scipy.stats import gmean, ks_2samp, norm, combine_pvalues
 import natsort
 import pathos
-import Valkyries.FASTQReader as FASTQReader
-from Valkyries import FASTQ_Tools, Tool_Box, Sequence_Magic
+from Valkyries import FASTQ_Tools, FASTQReader, Tool_Box, Sequence_Magic
 
 
 __author__ = 'Dennis A. Simpson'
@@ -519,8 +518,8 @@ class SyntheticLethal:
 
         tmp_bad_targets_dict.clear()
         # Check for missing or vastly under represented Library Control Targets.
-        percentile1 = self.args.Bad_sgRNA_Percentile
-        percentile2 = 100-self.args.Bad_sgRNA_Percentile
+        percentile1 = self.args.Bad_sgRNA_Lower_Percentile
+        percentile2 = self.args.Bad_sgRNA_Upper_Percentile
 
         upper_limit = \
             (numpy.percentile(numpy.array(percentile_list), percentile2, interpolation='linear'))
@@ -545,10 +544,11 @@ class SyntheticLethal:
             self.file_read(self.args.Library_Control)
 
         bad_target_outstring = "sgRNA Targets excluded from analysis.\nFile Generated {}\nLibrary Control File: {}\n" \
-                               "{} Percentile gTCnorm Lower Cutoff: {}\nUpper Cutoff: {}\n\nsgRNA Name\tgTCnorm\n"\
+                               "{} Lower Percentile gTCnorm Lower Cutoff: {}\n" \
+                               "{} Lower Percentile gTCnorm Upper Cutoff: {}\n\nsgRNA Name\tgTCnorm\n"\
             .format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), self.args.Library_Control,
-                    self.args.Bad_sgRNA_Percentile, format(library_lower_limit, '.4g'),
-                    format(library_upper_limit, '.4g'))
+                    self.args.Bad_sgRNA_Lower_Percentile, format(library_lower_limit, '.4g'),
+                    self.args.Bad_sgRNA_Upper_Percentile, format(library_upper_limit, '.4g'))
 
         # sample_bad_targets_dict, upper_limit, lower_limit = self.bad_correlation(tmp_tc_norm_dict)
         # bad_correlation_outstring = "\n"
@@ -1029,31 +1029,6 @@ class SyntheticLethal:
         self.log.debug("Begin Writing Data Output File")
         args = self.args
 
-        total_indexed_reads = 0
-        for sample_index in self.sample_data_dict:
-            temp_file = open("{}{}_counts.tmp".format(args.WorkingFolder, sample_index), "r")
-            for line in temp_file:
-                total_indexed_reads += int(line)
-            temp_file.close()
-
-        index_header = "Index Name\tSample Name\tSample Replica\tIndex Mismatch 0\tIndex Mismatch 1\tFiltered Reads"
-
-        for i in range(3):
-            index_header += "\t{}_mismatches".format(i)
-        index_header += "\tTargeted\tNot Targeted\tFraction Targeted\n"
-
-        run_param_out = open("{0}{1}_summary.txt".format(args.WorkingFolder, args.Job_Name), "w")
-        run_stop = datetime.datetime.today().strftime(self.date_format)
-        run_param_out.write("Running:\t{} Synthetic_Lethal v{}\nStart_Time:\t{}\nStop_Time\t{}\nFASTQ_File:\t{}\n"
-                            "SampleManifest:\t{}\nTarget_File:\t{}\nIndex_Mismatches\t1\nTarget_Mismatches\t{}\n"
-                            "Target_Padding\t{}\nExpected_Position\t{}\nMin_Read_length\t{}\nTarget_Start\t{}\n"
-                            "Target_Length\t{}\nTotal_Reads:\t{}\nIndexed_Reads:\t{}\nUnknown_Count:\t{}\n\n{}"
-                            .format(__package__, __version__, self.run_start, run_stop, args.FASTQ1, args.SampleManifest,
-                                    args.Target_File, args.Target_Mismatch, args.Target_Padding,
-                                    args.Expected_Position, args.MinimumReadLength, args.Target_Start, args.Target_Length,
-                                    self.fastq_read_counts[0], total_indexed_reads,
-                                    self.fastq_read_counts[0] - self.fastq_read_counts[1], index_header))
-
         # Data captured from the multiprocessor calls is a list of lists.  This is to remove the outer level without
         # the need to modify my existing code below.
         multiprocessor_data_list = []
@@ -1063,6 +1038,9 @@ class SyntheticLethal:
                 multiprocessor_data_list.append(c)
 
         param_string = ""
+        unknown_count = 0
+        total_indexed_reads = 0
+        file_delete_list = []
         for data in multiprocessor_data_list:
 
             # If we are not analyzing the unknowns there will be a NoneType entry in the list.
@@ -1072,6 +1050,18 @@ class SyntheticLethal:
                 continue
 
             index_name = self.sample_data_dict[index_seq][1]
+            temp_file = open("{}{}_counts.tmp".format(args.WorkingFolder, index_name), "r")
+            file_delete_list.append("{}{}_counts.tmp".format(args.WorkingFolder, index_name))
+            sample_indexed_reads = 0
+
+            for line in temp_file:
+                sample_indexed_reads = int(line)
+                total_indexed_reads += int(line)
+                if index_name == "Unknown" or "GhostIndex":
+                    unknown_count += int(line)
+
+            temp_file.close()
+
             re.sub('[\s]', "", index_name)
 
             # Index Name, Sample Name, Sample Replica
@@ -1085,16 +1075,37 @@ class SyntheticLethal:
             # Targeted, Not Targeted, Fraction Targeted.
             good_reads = \
                 self.sample_data_dict[index_seq][0][0]+self.sample_data_dict[index_seq][0][1]
-            indexed_reads = self.sample_data_dict[index_seq][0][0]+self.sample_data_dict[index_seq][0][1]
+
             targeted_reads = data[0]
             if good_reads == 0:
                 param_string += "\t0\t0\t0\n"
             else:
                 param_string += "\t{}\t{}\t{}\n"\
-                    .format(targeted_reads, indexed_reads-targeted_reads, targeted_reads/indexed_reads)
+                    .format(targeted_reads, sample_indexed_reads-targeted_reads, targeted_reads/sample_indexed_reads)
+
+        # Create and populate Summary File
+        index_header = "Index Name\tSample Name\tSample Replica\tIndex Mismatch 0\tIndex Mismatch 1\tFiltered Reads"
+
+        for i in range(3):
+            index_header += "\t{}_mismatches".format(i)
+        index_header += "\tTargeted\tNot Targeted\tFraction Targeted\n"
+
+        run_param_out = open("{0}{1}_summary.txt".format(args.WorkingFolder, args.Job_Name), "w")
+        run_stop = datetime.datetime.today().strftime(self.date_format)
+        run_param_out.write("Running:\t{} Synthetic_Lethal v{}\nStart_Time:\t{}\nStop_Time\t{}\nFASTQ_File:\t{}\n"
+                            "SampleManifest:\t{}\nTarget_File:\t{}\nIndex_Mismatches\t1\nTarget_Mismatches\t{}\n"
+                            "Target_Padding\t{}\nExpected_Position\t{}\nMin_Read_length\t{}\nTarget_Start\t{}\n"
+                            "Target_Length\t{}\nTotal_Reads:\t{}\nIndexed_Reads:\t{}\nUnknown_Count:\t{}\n\n{}"
+                            .format(__package__, __version__, self.run_start, run_stop, args.FASTQ1,
+                                    args.SampleManifest, args.Target_File, args.Target_Mismatch, args.Target_Padding,
+                                    args.Expected_Position, args.MinimumReadLength, args.Target_Start,
+                                    args.Target_Length, self.fastq_read_counts[0], total_indexed_reads, unknown_count,
+                                    index_header))
 
         run_param_out.write(param_string)
         run_param_out.close()
+
+        Tool_Box.delete(file_delete_list)
 
         self.log.debug("Data Summary File Written.")
 
@@ -1291,8 +1302,9 @@ class SyntheticLethal:
                              "{}{}_GhostIndex.fq.gz".format(self.args.WorkingFolder, self.args.Job_Name)])
 
         self.log.info("FASTQ Processing Done.  Begin combining temporary files")
-        p.starmap(Tool_Box.file_merge, zip(self.sample_data_dict,
-                                           itertools.repeat(self.args, self.log, self.sample_data_dict, worker)))
+        file_merge_parameters = (self.args, self.log, self.sample_data_dict, worker)
+        p.starmap(Tool_Box.file_merge, zip(self.sample_data_dict, itertools.repeat(file_merge_parameters)))
+
         for worker_id in worker:
 
             for sample_index in self.sample_data_dict:

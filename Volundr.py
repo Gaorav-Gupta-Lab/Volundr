@@ -100,7 +100,6 @@ def error_checking(parser):
             options_parser.set_defaults(RevComp=bool(strtobool(initial_args.RevComp)))
             options_parser.set_defaults(BatchSize=int(initial_args.BatchSize))
             options_parser.set_defaults(Target_Mismatch=int(initial_args.Target_Mismatch))
-            # options_parser.set_defaults(Min_Length=int(initial_args.Min_Length))
             options_parser.set_defaults(MinimumReadLength=int(initial_args.MinimumReadLength))
             options_parser.set_defaults(N_Limit=10)
             options_parser.set_defaults(Target_Length=int(initial_args.Target_Length))
@@ -121,7 +120,8 @@ def error_checking(parser):
                                         bool(strtobool(initial_args.Write_Log2_sgRNA_File)))
             options_parser.set_defaults(Write_Permuted_Log2_Data_File=
                                         bool(strtobool(initial_args.Write_Permuted_Log2_Data_File)))
-            options_parser.set_defaults(Bad_sgRNA_Percentile=float(initial_args.Bad_sgRNA_Percentile))
+            options_parser.set_defaults(Bad_sgRNA_Lower_Percentile=float(initial_args.Bad_sgRNA_Lower_Percentile))
+            options_parser.set_defaults(Bad_sgRNA_Upper_Percentile=float(initial_args.Bad_sgRNA_Upper_Percentile))
             options_parser.set_defaults(UpperPercentile=float(initial_args.UpperPercentile))
             options_parser.set_defaults(LowerPercentile=float(initial_args.LowerPercentile))
             options_parser.set_defaults(PermutationCount=int(initial_args.PermutationCount))
