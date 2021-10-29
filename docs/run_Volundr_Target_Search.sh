@@ -23,7 +23,6 @@ exit
 --Platform	Illumina
 --Analyze_Unknowns	False
 --Delete_Demultiplexed_FASTQ	True
---Compress	False
 
 
 # Module Selection
@@ -45,7 +44,6 @@ exit
 --Min_Length	120
 --Target_Length	20
 --Target_Start	20
---Index_Mismatch	2
 --Target_Padding	2
 --Expected_Position	61
 --AnchorSeq	AAACACCG
