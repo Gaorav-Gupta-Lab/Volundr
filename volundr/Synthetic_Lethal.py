@@ -1055,10 +1055,11 @@ class SyntheticLethal:
             sample_indexed_reads = 0
 
             for line in temp_file:
-                sample_indexed_reads = int(line)
-                total_indexed_reads += int(line)
-                if index_name == "Unknown" or "GhostIndex":
+                if index_name == "Unknown" or index_name == "GhostIndex":
                     unknown_count += int(line)
+                else:
+                    sample_indexed_reads = int(line)
+                    total_indexed_reads += int(line)
 
             temp_file.close()
 
